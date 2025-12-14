@@ -1,62 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>HighTech Periodic Table</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="app">
-      <header class="top-bar">
-        <h1>HighTech Periodic Table</h1>
-        <p>Click any element to see electrons & bonding details</p>
+<head>
+  <meta charset="UTF-8" />
+  <title>HighTech Periodic Table</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="top-bar">
+      <h1>HighTech Periodic Table</h1>
+      <p>Click or drag elements to explore atoms and reactions</p>
+    </header>
 
-        <!-- voice + filter controls -->
-        <div class="controls-row">
-          <select id="voice-select">
-            <option value="">Default browser voice</option>
-          </select>
+    <div class="controls-row">
+      <select id="voice-select">
+        <option value="">Default browser voice</option>
+      </select>
 
-          <select id="filter-select">
-            <option value="all">Show All elements</option>
-            <option value="alkali">Alkali metals (Group 1)</option>
-            <option value="alkaline-earth">Alkaline earth metals (Group 2)</option>
-            <option value="transition">Transition metals (Groups 3–12)</option>
-            <option value="p-block">p-Block elements</option>
-            <option value="noble-gas">Noble gases</option>
-            <option value="halogen">Halogens</option>
-            <option value="lanthanoid">Lanthanoids</option>
-            <option value="actinoid">Actinoids</option>
-          </select>
+      <select id="filter-select">
+        <option value="all">Show All elements</option>
+        <option value="alkali">Alkali metals (Group 1)</option>
+        <option value="alkaline-earth">Alkaline earth metals (Group 2)</option>
+        <option value="transition">Transition metals (Groups 3–12)</option>
+        <option value="p-block">p-Block elements</option>
+        <option value="noble-gas">Noble gases</option>
+        <option value="halogen">Halogens</option>
+        <option value="lanthanoid">Lanthanoids</option>
+        <option value="actinoid">Actinoids</option>
+      </select>
 
-          <!-- NEW voice search button -->
-          <button id="voice-search-btn">Voice search element</button>
+      <button id="voice-search-btn">Voice search</button>
+      <button id="bonding-btn" class="menu-btn">Chemical Bonding</button>
+    </div>
+
+    <!-- Reaction selection row -->
+    <div class="react-row">
+      <div class="react-slot" id="react-left">?</div>
+      <span class="react-plus">+</span>
+      <div class="react-slot" id="react-right">?</div>
+      <button id="react-run-btn">Show Reaction</button>
+    </div>
+
+    <main class="table-wrapper">
+      <div id="table" class="ptable"></div>
+    </main>
+
+    <!-- ELEMENT MODAL -->
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+      <div class="modal">
+        <button id="modal-close" class="modal-close">×</button>
+        <div class="modal-info">
+          <h2 id="el-title">Element</h2>
+          <p id="el-line1" class="line"></p>
+          <p id="el-line2" class="line"></p>
+          <p id="el-line3" class="line"></p>
         </div>
-      </header>
+        <canvas id="atom-canvas" width="420" height="420"></canvas>
+      </div>
+    </div>
 
-      <main class="table-wrapper">
-        <div id="table" class="ptable"></div>
-      </main>
-
-      <!-- POPUP MODAL -->
-      <div id="modal-backdrop" class="modal-backdrop hidden">
-        <div class="modal">
-          <button id="modal-close" class="modal-close">✕</button>
-          <div class="modal-info">
-            <h2 id="el-title">Element</h2>
-            <p id="el-line1" class="line"></p>
-            <p id="el-line2" class="line"></p>
-            <p id="el-line3" class="line"></p>
-          </div>
-          <canvas id="atom-canvas" width="420" height="420"></canvas>
+    <!-- CHEMICAL BONDING MODAL (original advanced one) -->
+    <div id="bonding-modal" class="modal-backdrop hidden">
+      <div class="bonding-modal">
+        <button id="bonding-close" class="modal-close">×</button>
+        <div class="bonding-content">
+          <h2>Chemical Bonding – Basic to Advanced</h2>
+          <div id="bonding-lessons" class="lessons-grid"></div>
+          <canvas id="bonding-canvas" class="bonding-canvas"></canvas>
+          <div id="bonding-info" class="bonding-info"></div>
         </div>
       </div>
     </div>
 
-    <!-- Tumhara JS -->
-    <script src="app.js"></script>
+    <!-- REACTION MODAL -->
+    <div id="reaction-backdrop" class="modal-backdrop hidden">
+      <div class="reaction-modal">
+        <button id="reaction-close" class="modal-close">×</button>
+        <div class="reaction-content">
+          <h2 id="reaction-title">A + B →</h2>
+          <canvas id="reaction-canvas" width="600" height="360"></canvas>
+          <p id="reaction-info"></p>
+        </div>
+      </div>
+    </div>
 
-    <!-- Noupe AI chatbot embed -->
-    <script src="https://www.noupe.com/embed/01980cc4a3ab788f92fbee0c70a738e54d73.js"></script>
-  </body>
+    <!-- SIMPLE AI CHAT PANEL (same structure as original) -->
+    <section class="chat-panel">
+      <div id="chat-window" class="chat-window"></div>
+      <form id="chat-form" class="chat-form">
+        <input id="chat-input" type="text" placeholder="Ask your AI chemistry tutor..." />
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>

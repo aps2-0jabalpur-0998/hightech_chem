@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HighTech Periodic Table</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top-bar">
+        <h1>HighTech Periodic Table</h1>
+        <p>Click any element to see electrons & bonding details</p>
+
+        <!-- voice + filter controls -->
+        <div class="controls-row">
+          <select id="voice-select">
+            <option value="">Default browser voice</option>
+          </select>
+
+          <select id="filter-select">
+            <option value="all">Show All elements</option>
+            <option value="alkali">Alkali metals (Group 1)</option>
+            <option value="alkaline-earth">Alkaline earth metals (Group 2)</option>
+            <option value="transition">Transition metals (Groups 3–12)</option>
+            <option value="p-block">p-Block elements</option>
+            <option value="noble-gas">Noble gases</option>
+            <option value="halogen">Halogens</option>
+            <option value="lanthanoid">Lanthanoids</option>
+            <option value="actinoid">Actinoids</option>
+          </select>
+
+          <!-- NEW voice search button -->
+          <button id="voice-search-btn">Voice search element</button>
+        </div>
+      </header>
+
+      <main class="table-wrapper">
+        <div id="table" class="ptable"></div>
+      </main>
+
+      <!-- POPUP MODAL -->
+      <div id="modal-backdrop" class="modal-backdrop hidden">
+        <div class="modal">
+          <button id="modal-close" class="modal-close">✕</button>
+          <div class="modal-info">
+            <h2 id="el-title">Element</h2>
+            <p id="el-line1" class="line"></p>
+            <p id="el-line2" class="line"></p>
+            <p id="el-line3" class="line"></p>
+          </div>
+          <canvas id="atom-canvas" width="420" height="420"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

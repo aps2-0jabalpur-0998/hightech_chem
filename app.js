@@ -1,7 +1,5 @@
 // ===== 118-element data (Z,symbol,name,period,group,block) =====
-
-const RAW_DATA = `
-1,H,Hydrogen,1,1,s
+const RAW_DATA = `1,H,Hydrogen,1,1,s
 2,He,Helium,1,18,s
 3,Li,Lithium,2,1,s
 4,Be,Beryllium,2,2,s
@@ -118,8 +116,7 @@ const RAW_DATA = `
 115,Mc,Moscovium,7,15,p
 116,Lv,Livermorium,7,16,p
 117,Ts,Tennessine,7,17,p
-118,Og,Oganesson,7,18,p
-`;
+118,Og,Oganesson,7,18,p`;
 
 const elements = RAW_DATA.trim().split("\n").map((line) => {
   const [z, sym, name, period, group, block] = line.split(",");
@@ -135,14 +132,12 @@ const elements = RAW_DATA.trim().split("\n").map((line) => {
 });
 
 // ===== VOICE HANDLING =====
-
 let allVoices = [];
 let currentVoice = null;
 
 function loadVoices() {
   if (!("speechSynthesis" in window)) return;
   allVoices = window.speechSynthesis.getVoices() || [];
-
   const select = document.getElementById("voice-select");
   if (!select) return;
 
@@ -191,7 +186,6 @@ function speak(text) {
 }
 
 // ===== TABLE RENDER =====
-
 const tableDiv = document.getElementById("table");
 
 elements.forEach((el) => {
@@ -247,19 +241,37 @@ elements.forEach((el) => {
   cell.appendChild(robo);
   cell.appendChild(roboDot);
 
+  // drag support for reaction circles
+  cell.draggable = true;
+  cell.dataset.symbol = el.sym;
+  cell.dataset.name = el.name;
+
+  cell.addEventListener("dragstart", () => {
+    cell.classList.add("dragging");
+    speak(`Dragging ${el.name} (${el.sym})`);
+  });
+
+  cell.addEventListener("dragend", () => {
+    cell.classList.remove("dragging");
+  });
+
   cell.addEventListener("mouseenter", () => {
     speak(`${el.name}. Symbol ${el.sym}.`);
   });
+
   cell.addEventListener("mouseleave", () => {
     window.speechSynthesis.cancel();
   });
-  cell.addEventListener("click", () => openModal(el));
+
+  cell.addEventListener("click", () => {
+    handleReactantClick(el);
+    openModal(el);
+  });
 
   tableDiv.appendChild(cell);
 });
 
 // ===== FILTERING =====
-
 const filterSelect = document.getElementById("filter-select");
 
 function applyFilter() {
@@ -279,8 +291,7 @@ if (filterSelect) {
   filterSelect.addEventListener("change", applyFilter);
 }
 
-// ===== MODAL + CANVAS =====
-
+// ===== MODAL + CANVAS (element) =====
 const backdrop = document.getElementById("modal-backdrop");
 const closeBtn = document.getElementById("modal-close");
 const titleEl = document.getElementById("el-title");
@@ -316,22 +327,18 @@ function prettyConfig(shells) {
 function openModal(el) {
   currentElement = el;
   shells = shellsFromElectrons(el.e);
-
-  // Equidistant base angles per shell
   baseAngles = [];
   shells.forEach((shell) => {
     const step = (2 * Math.PI) / shell.count;
-    for (let i = 0; i < shell.count; i++) {
-      baseAngles.push(i * step);
-    }
+    for (let i = 0; i < shell.count; i++) baseAngles.push(i * step);
   });
 
   const cfg = prettyConfig(shells);
   const valence = el.e <= 2 ? el.e : el.e % 8 || 8;
 
-  titleEl.textContent = `${el.name} (${el.sym})  Z=${el.z}`;
-  line1El.innerHTML = `<strong>Electrons</strong> ${el.e} &nbsp; <strong>Shells</strong> ${cfg}`;
-  line2El.innerHTML = `<strong>Period</strong> ${el.period} &nbsp; <strong>Group</strong> ${el.group} &nbsp; <strong>Block</strong> ${el.block.toUpperCase()}-block`;
+  titleEl.textContent = `${el.name} (${el.sym}) Z=${el.z}`;
+  line1El.innerHTML = `Electrons ${el.e} Shells ${cfg}`;
+  line2El.innerHTML = `Period ${el.period} Group ${el.group} Block ${el.block.toUpperCase()}-block`;
 
   let bondMsg;
   if (valence === 1) bondMsg = "Tends to lose 1 electron, forms ionic bonds.";
@@ -339,15 +346,14 @@ function openModal(el) {
   else if (valence === 7) bondMsg = "Tends to gain 1 electron to complete octet.";
   else bondMsg = "Relatively less reactive / more stable.";
 
-  line3El.innerHTML = `<strong>Valence e⁻</strong> ${valence} &nbsp; ${bondMsg}`;
+  line3El.innerHTML = `Valence e⁻ ${valence} ${bondMsg}`;
 
   backdrop.classList.remove("hidden");
   if (animId) cancelAnimationFrame(animId);
-  animate(0);
+  animateAtom(0);
 
   const detailSpeech = `${el.name}. Symbol ${el.sym}. Atomic number ${el.z}. ${el.e} electrons in shells ${cfg}. Period ${el.period}, group ${el.group}, ${el.block} block. Valence electrons ${valence}. ${bondMsg}`;
   speak(detailSpeech);
-
   lastElementForChat = `${el.name} (${el.sym}), Z = ${el.z}`;
 }
 
@@ -361,10 +367,7 @@ function closeModal() {
 backdrop.addEventListener("click", (e) => {
   if (e.target === backdrop) closeModal();
 });
-
 closeBtn.addEventListener("click", closeModal);
-
-// ===== ANIMATION (slow + equidistant) =====
 
 function drawOrbit(cx, cy, r) {
   ctx.beginPath();
@@ -374,16 +377,14 @@ function drawOrbit(cx, cy, r) {
   ctx.stroke();
 }
 
-function animate(frame) {
+function animateAtom(frame) {
   const w = canvas.width;
   const h = canvas.height;
   const cx = w / 2;
   const cy = h / 2;
-
-  const t = frame * 0.002; // slow
+  const t = frame * 0.002;
 
   ctx.clearRect(0, 0, w, h);
-
   const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 220);
   grad.addColorStop(0, "#111827");
   grad.addColorStop(1, "#020617");
@@ -407,21 +408,18 @@ function animate(frame) {
   }
 
   if (!currentElement || !shells) {
-    animId = requestAnimationFrame((f) => animate(f + 1));
+    animId = requestAnimationFrame((f) => animateAtom(f + 1));
     return;
   }
 
   let idx = 0;
   const trailLen = 5;
-
   shells.forEach((shell, si) => {
     const r = shell.r;
     drawOrbit(cx, cy, r);
-
     for (let j = 0; j < shell.count; j++) {
       const base = baseAngles[idx % baseAngles.length];
       const angle = base + t * (0.5 + 0.2 * si);
-
       const ex = cx + r * Math.cos(angle);
       const ey = cy + r * Math.sin(angle);
 
@@ -448,35 +446,807 @@ function animate(frame) {
       ctx.arc(ex, ey, 6, 0, 2 * Math.PI);
       ctx.fill();
       ctx.stroke();
-
       idx++;
     }
   });
 
-  animId = requestAnimationFrame((f) => animate(f + 1));
+  animId = requestAnimationFrame((f) => animateAtom(f + 1));
+}
+animateAtom(0);
+
+// ===== REACTION SYSTEM (click + drag) =====
+let reactLeft = null;
+let reactRight = null;
+
+const reactLeftSlot = document.getElementById("react-left");
+const reactRightSlot = document.getElementById("react-right");
+const reactRunBtn = document.getElementById("react-run-btn");
+
+const reactionDefs = {
+  'H H': 'H₂ - Simple covalent single bond.',
+  'Na Cl': 'NaCl - Ionic bond (Na⁺ + Cl⁻).',
+  'H O': 'H₂O - Polar covalent, bent shape (104.5°).',
+  'C H': 'CH₄ - Tetrahedral covalent (sp³, 109.5°).',
+  'H Cl': 'HCl - Polar covalent bond.',
+  'C O': 'CO₂ - Linear, two double bonds (180°).',
+  // NEW BASIC REACTIONS (ADD THESE)
+  'Mg O': '2Mg + O₂ → 2MgO - Metal + Oxygen → Oxide (ionic).',
+  'Fe HCl': 'Fe + 2HCl → FeCl₂ + H₂ - Metal displacement.',
+  'Zn HCl': 'Zn + 2HCl → ZnCl₂ + H₂ - Single displacement.',
+  'Ca O': '2Ca + O₂ → 2CaO - Alkaline earth oxide.',
+  'Al O': '4Al + 3O₂ → 2Al₂O₃ - Amphoteric oxide.',
+  'N H': 'NH₃ - Trigonal pyramidal (3 bonds, 1 lone pair).',
+  'P H': 'PH₃ - Similar to NH₃ but less polar.',
+  'S H': 'H₂S - Bent, like H₂O.',
+  'C C': 'C₂H₆ - C-C single bond (ethane skeleton).',
+  'Na H2O': '2Na + 2H₂O → 2NaOH + H₂ - Violent alkali reaction.',
+  'K H2O': '2K + 2H₂O → 2KOH + H₂ - Even more reactive.',
+  'Cu O': '2Cu + O₂ → 2CuO - Transition metal oxide.',
+  'default': 'Potential compound formation based on electronegativity difference.'
+};
+// electronegativity (for tug of war)
+const EN = {
+  H: 2.2,
+  C: 2.55,
+  N: 3.04,
+  O: 3.44,
+  F: 3.98,
+  Cl: 3.16,
+  Br: 2.96,
+  I: 2.66,
+  Na: 0.93,
+  K: 0.82,
+  Ca: 1.0,
+  Mg: 1.31,
+  S: 2.58,
+  P: 2.19,
+};
+
+function handleReactantClick(el) {
+  if (!reactLeft) {
+    reactLeft = el;
+    reactLeftSlot.textContent = el.sym;
+  } else if (!reactRight) {
+    reactRight = el;
+    reactRightSlot.textContent = el.sym;
+  } else {
+    reactLeft = el;
+    reactRight = null;
+    reactLeftSlot.textContent = el.sym;
+    reactRightSlot.textContent = "?";
+  }
 }
 
-animate(0);
+function setActiveSlot(slot) {
+  reactLeftSlot.classList.remove("active-slot");
+  reactRightSlot.classList.remove("active-slot");
+  if (slot) slot.classList.add("active-slot");
+}
+
+[reactLeftSlot, reactRightSlot].forEach((slot, index) => {
+  slot.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    setActiveSlot(slot);
+  });
+
+  slot.addEventListener("dragleave", () => {
+    slot.classList.remove("active-slot");
+  });
+
+  slot.addEventListener("drop", (e) => {
+    e.preventDefault();
+    slot.classList.remove("active-slot");
+
+    const draggingCell = document.querySelector(".cell.dragging");
+    if (!draggingCell) return;
+
+    const sym = draggingCell.dataset.symbol;
+    const name = draggingCell.dataset.name;
+    const element = elements.find((el) => el.sym === sym);
+    if (!element) return;
+
+    if (index === 0) {
+      reactLeft = element;
+      reactLeftSlot.textContent = sym;
+    } else {
+      reactRight = element;
+      reactRightSlot.textContent = sym;
+    }
+
+    speak(`${name} dropped in ${index === 0 ? "left" : "right"} circle.`);
+  });
+});
+
+reactLeftSlot.addEventListener("click", () => {
+  reactLeft = null;
+  reactLeftSlot.textContent = "?";
+});
+reactRightSlot.addEventListener("click", () => {
+  reactRight = null;
+  reactRightSlot.textContent = "?";
+});
+
+if (reactRunBtn) {
+  reactRunBtn.addEventListener("click", () => {
+    if (!reactLeft || !reactRight) {
+      speak("Select two elements by clicking or dragging them into the circles.");
+      return;
+    }
+    showChemicalReaction(reactLeft.sym, reactRight.sym);
+  });
+}
+
+// ===== REACTION MODAL DRAWING + ANIMATION =====
+const reactionBackdrop = document.getElementById("reaction-backdrop");
+const reactionClose = document.getElementById("reaction-close");
+const reactionTitle = document.getElementById("reaction-title");
+const reactionInfo = document.getElementById("reaction-info");
+const reactionCanvas = document.getElementById("reaction-canvas");
+const reactionCtx = reactionCanvas.getContext("2d");
+
+let reactionAnimId = null;
+
+function showChemicalReaction(sym1, sym2) {
+  const key1 = `${sym1} ${sym2}`;
+  const key2 = `${sym2} ${sym1}`;
+  let infoText = reactionDefs[key1] || reactionDefs[key2] || reactionDefs['default'];
+  
+  // ENHANCED VOICE - detailed reaction description
+  const speech = `${sym1} plus ${sym2} forms ${infoText.split(' - ')[1] || 'compound'}. ${infoText}`;
+  speak(speech);
+  
+  reactionTitle.textContent = `${sym1} + ${sym2}`;
+  reactionInfo.textContent = infoText;
+  reactionBackdrop.classList.remove('hidden');
+  startReactionAnimation(sym1, sym2, infoText);
+
+  reactionTitle.textContent = `${sym1} + ${sym2} →`;
+  reactionInfo.textContent = `${sym1} + ${sym2}: ${infoText}`;
+
+  reactionBackdrop.classList.remove("hidden");
+  startReactionAnimation(sym1, sym2, infoText);
+
+  speak(`${sym1} plus ${sym2}. ${infoText}`);
+}
+
+function drawReactionAtom(ctx, x, y, label, color = "#facc15", r = 28) {
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.shadowColor = "#fef3c7";
+  ctx.shadowBlur = 18;
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "bold 20px system-ui";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x, y);
+}
+
+function drawStaticReaction(sym1, sym2, infoText) {
+  const ctx = reactionCtx;
+  const w = reactionCanvas.width;
+  const h = reactionCanvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  ctx.clearRect(0, 0, w, h);
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) / 2);
+  grad.addColorStop(0, "#020617");
+  grad.addColorStop(1, "#020617");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  const leftX = cx - 120;
+  const rightX = cx + 120;
+
+  drawReactionAtom(ctx, leftX, cy, sym1, "#22c55e", 30);
+  drawReactionAtom(ctx, rightX, cy, sym2, "#60a5fa", 30);
+
+  const dashed = infoText.includes("Ionic");
+
+  ctx.strokeStyle = dashed ? "#f97316" : "#38bdf8";
+  ctx.lineWidth = 4;
+  if (dashed) ctx.setLineDash([10, 6]);
+  ctx.beginPath();
+  ctx.moveTo(leftX + 35, cy);
+  ctx.lineTo(rightX - 35, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!dashed && infoText.includes("double")) {
+    ctx.beginPath();
+    ctx.moveTo(leftX + 35, cy + 8);
+    ctx.lineTo(rightX - 35, cy + 8);
+    ctx.stroke();
+  }
+}
+
+function startReactionAnimation(sym1, sym2, infoText) {
+  if (reactionAnimId) cancelAnimationFrame(reactionAnimId);
+
+  const ctx = reactionCtx;
+  const w = reactionCanvas.width;
+  const h = reactionCanvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  const leftStartX = cx - 220;
+  const rightStartX = cx + 220;
+  const leftEndX = cx - 120;
+  const rightEndX = cx + 120;
+
+  const totalFrames = 200;
+
+  const isIonic = infoText.includes("Ionic");
+  const isDouble = infoText.includes("double");
+  const en1 = EN[sym1] || 2.0;
+  const en2 = EN[sym2] || 2.0;
+  const highENRight = en2 > en1;
+  const enDiff = Math.abs(en1 - en2);
+
+  const getValence = (sym) => {
+    const e = elements.find((el) => el.sym === sym);
+    if (!e) return 0;
+    const z = e.z;
+    if (z <= 2) return z;
+    const mod = z % 8;
+    return mod === 0 ? 8 : mod;
+  };
+
+  const valLeft0 = getValence(sym1);
+  const valRight0 = getValence(sym2);
+
+  function drawBackground() {
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) / 2);
+    grad.addColorStop(0, "#020617");
+    grad.addColorStop(1, "#020617");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawLewisDots(x, y, valence, chargeShift = 0) {
+    const total = Math.max(0, Math.min(8, valence + chargeShift));
+    const r = 36;
+    const positions = [
+      0,
+      Math.PI / 2,
+      Math.PI,
+      (3 * Math.PI) / 2,
+      Math.PI / 4,
+      (3 * Math.PI) / 4,
+      (5 * Math.PI) / 4,
+      (7 * Math.PI) / 4,
+    ];
+    ctx.fillStyle = "#e5e7eb";
+    for (let i = 0; i < total; i++) {
+      const a = positions[i];
+      const dx = Math.cos(a) * r;
+      const dy = Math.sin(a) * r;
+      ctx.beginPath();
+      ctx.arc(x + dx, y + dy, 3, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  function frameFn(frame) {
+    const t = frame / totalFrames;
+
+    ctx.clearRect(0, 0, w, h);
+    drawBackground();
+
+    const tAtoms = Math.min(1, t / 0.4);
+    const easeAtoms =
+      tAtoms < 0.5 ? 2 * tAtoms * tAtoms : -1 + (4 - 2 * tAtoms) * tAtoms;
+
+    const leftX = leftStartX + (leftEndX - leftStartX) * easeAtoms;
+    const rightX = rightStartX + (rightEndX - rightStartX) * easeAtoms;
+
+    drawReactionAtom(ctx, leftX, cy, sym1, "#22c55e", 30);
+    drawReactionAtom(ctx, rightX, cy, sym2, "#60a5fa", 30);
+
+    const midX = (leftX + rightX) / 2;
+
+    const electronPhase = Math.min(1, Math.max(0, (t - 0.2) / 0.4));
+    const sharedPairs = isDouble ? 2 : 1;
+
+    for (let pair = 0; pair < sharedPairs; pair++) {
+      const baseOffset = (pair - (sharedPairs - 1) / 2) * 10;
+
+      let bias = 0;
+      if (!isIonic && enDiff > 0.3) {
+        const tugPhase = Math.min(1, Math.max(0, (t - 0.6) / 0.3));
+        const maxShift = 0.25 + 0.15 * Math.min(enDiff, 1.0);
+        bias = maxShift * tugPhase * (highENRight ? 1 : -1);
+      }
+
+      if (isIonic) {
+        const travel = electronPhase;
+        const fromX = highENRight ? leftX : rightX;
+        const toX = highENRight ? rightX : leftX;
+        const ex = fromX + (toX - fromX) * travel;
+        const ey = cy - 28 + baseOffset;
+        ctx.beginPath();
+        ctx.fillStyle = "#facc15";
+        ctx.shadowColor = "#fde68a";
+        ctx.shadowBlur = 10;
+        ctx.arc(ex, ey, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else {
+        const shared = midX;
+        const ex =
+          shared +
+          bias * (highENRight ? rightX - midX : midX - leftX) * electronPhase;
+        const wiggle = Math.sin(frame * 0.2 + pair) * 3;
+        const ey = cy - 28 + baseOffset + wiggle;
+        ctx.beginPath();
+        ctx.fillStyle = "#facc15";
+        ctx.shadowColor = "#fde68a";
+        ctx.shadowBlur = 10;
+        ctx.arc(ex, ey, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    if (t > 0.5) {
+      const bondPhase = Math.min(1, (t - 0.5) / 0.4);
+      const dashed = isIonic;
+      const x1 = leftX + 35;
+      const x2 = rightX - 35;
+      const xMid = x1 + (x2 - x1) * bondPhase;
+
+      ctx.strokeStyle = dashed ? "#f97316" : "#38bdf8";
+      ctx.lineWidth = 4;
+      if (dashed) ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.moveTo(x1, cy);
+      ctx.lineTo(xMid, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (!dashed && isDouble) {
+        ctx.beginPath();
+        ctx.moveTo(x1, cy + 8);
+        ctx.lineTo(xMid, cy + 8);
+        ctx.stroke();
+      }
+    }
+
+    if (t > 0.8) {
+      const ldPhase = Math.min(1, (t - 0.8) / 0.2);
+
+      let leftShift = 0;
+      let rightShift = 0;
+
+      if (isIonic) {
+        const delta = Math.round(2 * ldPhase);
+        if (highENRight) {
+          leftShift = -delta;
+          rightShift = +delta;
+        } else {
+          leftShift = +delta;
+          rightShift = -delta;
+        }
+      } else if (enDiff > 0.3) {
+        const delta = ldPhase >= 1 ? 1 : 0;
+        if (highENRight) rightShift = delta;
+        else leftShift = delta;
+      }
+
+      drawLewisDots(leftX, cy, valLeft0, leftShift);
+      drawLewisDots(rightX, cy, valRight0, rightShift);
+    }
+
+    if (frame < totalFrames) {
+      reactionAnimId = requestAnimationFrame(() => frameFn(frame + 1));
+    } else {
+      drawStaticReaction(sym1, sym2, infoText);
+    }
+  }
+
+  frameFn(0);
+}
+
+reactionBackdrop.addEventListener("click", (e) => {
+  if (e.target === reactionBackdrop) reactionBackdrop.classList.add("hidden");
+});
+reactionClose.addEventListener("click", () => {
+  reactionBackdrop.classList.add("hidden");
+});
+
+// ===== NEW CHEMICAL BONDING MODAL (ADVANCED) =====
+const bondingBtn = document.getElementById("bonding-btn");
+const bondingModal = document.getElementById("bonding-modal");
+const bondingClose = document.getElementById("bonding-close");
+const lessonsDiv = document.getElementById("bonding-lessons");
+const bondingCanvas = document.getElementById("bonding-canvas");
+const bondingCtx = bondingCanvas ? bondingCanvas.getContext("2d") : null;
+const bondingInfo = document.getElementById("bonding-info");
+
+const bondingLessons = [
+  {
+    id: "intro",
+    title: "Octet Rule & Types",
+    desc: "Ionic, covalent, coordinate, metallic",
+    info: "Atoms try to get 8 valence electrons (duplet for H, He). Ionic: transfer. Covalent: sharing. Coordinate: lone pair donation. Metallic: electron sea.",
+  },
+  {
+    id: "h2",
+    title: "H₂ – Simple Covalent",
+    desc: "H–H (single bond)",
+    info: "Two H atoms share one pair of electrons to form a single covalent bond.",
+  },
+  {
+    id: "hcl",
+    title: "HCl – Polar Covalent",
+    desc: "H–Cl (polar)",
+    info: "H and Cl share a pair; Cl is more electronegative so bond is polar.",
+  },
+  {
+    id: "h2o",
+    title: "H₂O – Bent",
+    desc: "2 bond pairs, 2 lone pairs",
+    info: "O forms two sigma bonds with H and keeps two lone pairs; bent shape (~104.5°).",
+  },
+  {
+    id: "nh3",
+    title: "NH₃ – Trigonal pyramidal",
+    desc: "3 bond pairs, 1 lone pair",
+    info: "N makes three bonds with H and has one lone pair.",
+  },
+  {
+    id: "ch4",
+    title: "CH₄ – sp³ Tetrahedral",
+    desc: "4 bond pairs",
+    info: "C forms four equivalent sp³ bonds with H; tetrahedral, 109.5°.",
+  },
+  {
+    id: "co2",
+    title: "CO₂ – Linear",
+    desc: "O=C=O",
+    info: "C forms two double bonds with O; linear, 180°.",
+  },
+  {
+    id: "ionic",
+    title: "NaCl – Ionic",
+    desc: "Na⁺ + Cl⁻ lattice",
+    info: "Na loses 1e⁻, Cl gains 1e⁻ to form ions; strong lattice.",
+  },
+  {
+    id: "coord",
+    title: "NH₄⁺ – Coordinate",
+    desc: "NH₃ + H⁺ → NH₄⁺",
+    info: "Lone pair on N donated to H⁺ to form coordinate bond.",
+  },
+  {
+    id: "metallic",
+    title: "Cu – Metallic",
+    desc: "Delocalised electrons",
+    info: "Positive Cu ions in a sea of electrons.",
+  },
+];
+
+let bondingAnimId = null;
+
+function showBondingModal() {
+  bondingModal.classList.remove("hidden");
+  lessonsDiv.innerHTML = bondingLessons
+    .map(
+      (lesson) =>
+        `<button class="lesson-btn" data-lesson="${lesson.id}">
+           ${lesson.title}<br/><small>${lesson.desc}</small>
+         </button>`
+    )
+    .join("");
+
+  document.querySelectorAll(".lesson-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const target = e.currentTarget;
+      const lessonId = target.dataset.lesson;
+      document
+        .querySelectorAll(".lesson-btn")
+        .forEach((b) => b.classList.remove("active"));
+      target.classList.add("active");
+      showBondingDemo(lessonId);
+    });
+  });
+
+  resizeBondingCanvas();
+  const first = document.querySelector('.lesson-btn[data-lesson="intro"]');
+  if (first) first.classList.add("active");
+  showBondingDemo("intro");
+}
+
+function resizeBondingCanvas() {
+  if (!bondingCanvas || !bondingCtx) return;
+  bondingCanvas.width = bondingCanvas.offsetWidth;
+  bondingCanvas.height = bondingCanvas.offsetHeight;
+}
+
+function showBondingDemo(lessonId) {
+  const lesson = bondingLessons.find((l) => l.id === lessonId);
+  if (!lesson || !bondingCtx) return;
+
+  if (bondingInfo) bondingInfo.textContent = lesson.info;
+  speak(`${lesson.title}: ${lesson.desc}. ${lesson.info}`);
+
+  if (bondingAnimId) cancelAnimationFrame(bondingAnimId);
+  bondingAnimId = requestAnimationFrame((f) => drawLessonFrame(lessonId, f));
+}
+
+function bondingBackground(ctx, w, h) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) / 2);
+  grad.addColorStop(0, "#020617");
+  grad.addColorStop(1, "#020617");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function bAtom(ctx, x, y, label, color = "#facc15", r = 28) {
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.shadowColor = "#fef3c7";
+  ctx.shadowBlur = 18;
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#0f172a";
+  ctx.font = "bold 20px system-ui";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x, y);
+}
+
+function bElectronPair(ctx, x, y, angleRad, distance) {
+  const dx = Math.cos(angleRad) * distance;
+  const dy = Math.sin(angleRad) * distance;
+  const r = 3;
+  ctx.fillStyle = "#e5e7eb";
+  ctx.beginPath();
+  ctx.arc(x + dx - 4, y + dy, r, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + dx + 4, y + dy, r, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function bBondLine(ctx, x1, y1, x2, y2, count = 1, color = "#e5e7eb") {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  const offset = 5;
+  for (let i = 0; i < count; i++) {
+    const t = (i - (count - 1) / 2) * offset;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1 + t);
+    ctx.lineTo(x2, y2 + t);
+    ctx.stroke();
+  }
+}
+
+function drawLessonFrame(lessonId, frame) {
+  const ctx = bondingCtx;
+  const w = bondingCanvas.width;
+  const h = bondingCanvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+
+  ctx.clearRect(0, 0, w, h);
+  bondingBackground(ctx, w, h);
+
+  const t = frame * 0.02;
+  const pulse = 1 + 0.05 * Math.sin(t);
+
+  if (lessonId === "intro") {
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "18px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("Octet rule → 8 valence electrons (H/He duplet).", cx, cy - 40);
+    ctx.fillText("Ionic: transfer | Covalent: sharing | Metallic: electron sea", cx, cy);
+    ctx.fillText("Coordinate: lone pair donation (NH₄⁺).", cx, cy + 40);
+  }
+
+  if (lessonId === "h2") {
+    const leftX = cx - 80;
+    const rightX = cx + 80;
+    bAtom(ctx, leftX, cy, "H", "#fbbf24", 24 * pulse);
+    bAtom(ctx, rightX, cy, "H", "#fbbf24", 24 * pulse);
+    bBondLine(ctx, leftX + 24, cy, rightX - 24, cy, 1);
+    bElectronPair(ctx, leftX, cy, Math.PI / 2, 40);
+    bElectronPair(ctx, rightX, cy, -Math.PI / 2, 40);
+  }
+
+  if (lessonId === "hcl") {
+    const leftX = cx - 80;
+    const rightX = cx + 80;
+    bAtom(ctx, leftX, cy, "H", "#fbbf24", 24 * pulse);
+    bAtom(ctx, rightX, cy, "Cl", "#22c55e", 30 * pulse);
+    bBondLine(ctx, leftX + 24, cy, rightX - 30, cy, 1, "#f97316");
+    bElectronPair(ctx, rightX, cy, Math.PI / 2, 40);
+    bElectronPair(ctx, rightX, cy, (3 * Math.PI) / 4, 40);
+    bElectronPair(ctx, rightX, cy, Math.PI / 4, 40);
+  }
+
+  if (lessonId === "h2o") {
+    const oX = cx;
+    const oY = cy;
+    const angle = (60 * Math.PI) / 180;
+    const r = 90;
+    const h1X = oX - r * Math.sin(angle);
+    const h1Y = oY + r * Math.cos(angle);
+    const h2X = oX + r * Math.sin(angle);
+    const h2Y = oY + r * Math.cos(angle);
+    bAtom(ctx, oX, oY, "O", "#60a5fa", 30 * pulse);
+    bAtom(ctx, h1X, h1Y, "H", "#fbbf24", 24 * pulse);
+    bAtom(ctx, h2X, h2Y, "H", "#fbbf24", 24 * pulse);
+    bBondLine(ctx, oX - 22, oY + 5, h1X + 20, h1Y - 5, 1);
+    bBondLine(ctx, oX + 22, oY + 5, h2X - 20, h2Y - 5, 1);
+    bElectronPair(ctx, oX, oY, -Math.PI / 2, 38);
+    bElectronPair(ctx, oX, oY, -Math.PI / 2 + 0.7, 42);
+  }
+
+  if (lessonId === "nh3") {
+    const nX = cx;
+    const nY = cy - 10;
+    const r = 95;
+    const angleStep = (2 * Math.PI) / 3;
+    bAtom(ctx, nX, nY, "N", "#22c55e", 30 * pulse);
+    for (let i = 0; i < 3; i++) {
+      const a = Math.PI / 2 + i * angleStep;
+      const hx = nX + r * Math.cos(a);
+      const hy = nY + r * Math.sin(a);
+      bAtom(ctx, hx, hy, "H", "#fbbf24", 22 * pulse);
+      bBondLine(
+        ctx,
+        nX + 20 * Math.cos(a),
+        nY + 20 * Math.sin(a),
+        hx - 20 * Math.cos(a),
+        hy - 20 * Math.sin(a),
+        1
+      );
+    }
+    bElectronPair(ctx, nX, nY, -Math.PI / 2, 40);
+  }
+
+  if (lessonId === "ch4") {
+    const cX = cx;
+    const cY = cy;
+    bAtom(ctx, cX, cY, "C", "#f97316", 30 * pulse);
+    const positions = [
+      { x: cX, y: cY - 90 },
+      { x: cX + 80, y: cY + 40 },
+      { x: cX - 80, y: cY + 40 },
+      { x: cX, y: cY + 100 },
+    ];
+    positions.forEach((p) => {
+      bAtom(ctx, p.x, p.y, "H", "#fbbf24", 22 * pulse);
+      bBondLine(ctx, cX, cY, p.x, p.y, 1);
+    });
+  }
+
+  if (lessonId === "co2") {
+    const leftX = cx - 120;
+    const rightX = cx + 120;
+    const cX = cx;
+    const cY = cy;
+    bAtom(ctx, leftX, cY, "O", "#60a5fa", 28 * pulse);
+    bAtom(ctx, cX, cY, "C", "#f97316", 30 * pulse);
+    bAtom(ctx, rightX, cY, "O", "#60a5fa", 28 * pulse);
+    bBondLine(ctx, leftX + 28, cY - 6, cX - 28, cY - 6, 2);
+    bBondLine(ctx, leftX + 28, cY + 6, cX - 28, cY + 6, 2);
+    bBondLine(ctx, cX + 28, cY - 6, rightX - 28, cY - 6, 2);
+    bBondLine(ctx, cX + 28, cY + 6, rightX - 28, cY + 6, 2);
+  }
+
+  if (lessonId === "ionic") {
+    const leftX = cx - 90;
+    const rightX = cx + 90;
+    bAtom(ctx, leftX, cy, "Na", "#22c55e", 28 * pulse);
+    bAtom(ctx, rightX, cy, "Cl", "#60a5fa", 30 * pulse);
+    ctx.strokeStyle = "#f97316";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -frame * 3;
+    ctx.beginPath();
+    ctx.moveTo(leftX + 35, cy - 20);
+    ctx.lineTo(rightX - 35, cy - 20);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    bElectronPair(ctx, rightX, cy + 10, Math.PI / 2, 38);
+    bElectronPair(ctx, rightX, cy + 10, (3 * Math.PI) / 4, 38);
+    bElectronPair(ctx, rightX, cy + 10, Math.PI / 4, 38);
+  }
+
+  if (lessonId === "coord") {
+    const nX = cx - 40;
+    const nY = cy;
+    const hX = cx + 80;
+    const hY = cy;
+    bAtom(ctx, nX, nY, "N", "#22c55e", 30 * pulse);
+    bAtom(ctx, hX, hY, "H⁺", "#fbbf24", 24 * pulse);
+    bElectronPair(ctx, nX, nY, 0, 40);
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -frame * 3;
+    ctx.beginPath();
+    ctx.moveTo(nX + 45, nY);
+    ctx.lineTo(hX - 30, hY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (lessonId === "metallic") {
+    const rows = 3;
+    const cols = 7;
+    const startX = cx - 180;
+    const startY = cy - 70;
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        const x = startX + j * 60;
+        const y = startY + i * 60;
+        bAtom(ctx, x, y, "Cu⁺", "#f97316", 20);
+      }
+    }
+    for (let k = 0; k < 30; k++) {
+      const ex = cx - 200 + ((k * 40 + frame * 4) % 400);
+      const ey = cy - 80 + (k % 6) * 25;
+      ctx.beginPath();
+      ctx.fillStyle = "#38bdf8";
+      ctx.arc(ex, ey, 3, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  bondingAnimId = requestAnimationFrame((f) => drawLessonFrame(lessonId, f + 1));
+}
+
+if (bondingBtn) bondingBtn.addEventListener("click", showBondingModal);
+
+if (bondingClose)
+  bondingClose.addEventListener("click", () => {
+    bondingModal.classList.add("hidden");
+    if (bondingAnimId) cancelAnimationFrame(bondingAnimId);
+  });
+
+if (bondingModal)
+  bondingModal.addEventListener("click", (e) => {
+    if (e.target === bondingModal) {
+      bondingModal.classList.add("hidden");
+      if (bondingAnimId) cancelAnimationFrame(bondingAnimId);
+    }
+  });
+
+window.addEventListener("resize", resizeBondingCanvas);
 
 // ===== VOICE SEARCH =====
-
 const voiceBtn = document.getElementById("voice-search-btn");
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 
 if (Recognition) {
   recognition = new Recognition();
-  recognition.lang = "en-US" || "en-IN";
+  recognition.lang = "en-IN";
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  recognition.addEventListener("result", (e) => {
-    const transcript = e.results[0][0].transcript.trim().toLowerCase();
-
-    const found = elements.find(
-      (el) =>
-        el.name.toLowerCase() === transcript || el.sym.toLowerCase() === transcript
-    );
+  recognition.addEventListener('result', e => {
+  const transcript = e.results[0][0].transcript.trim().toLowerCase();
+  
+  // NEW: Reaction query detection
+  if (transcript.includes('reaction') || transcript.includes('plus') || transcript.includes('+')) {
+    speak('Drag elements to reaction circles to see chemical reactions!');
+    return;
+  }
+  
+  const found = elements.find(el => 
+    el.name.toLowerCase().includes(transcript) || 
+    el.sym.toLowerCase() === transcript
+  );
 
     if (found) {
       speak(`Opening ${found.name}.`);
@@ -493,13 +1263,12 @@ if (voiceBtn && recognition) {
       recognition.start();
       speak("Say the element name or symbol, for example hydrogen or H.");
     } catch {
-      // ignore double start errors
+      // ignore double start
     }
   });
 }
 
 // ===== AI CHATBOT INTEGRATION =====
-
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatWindow = document.getElementById("chat-window");
@@ -524,7 +1293,6 @@ if (chatForm && chatInput && chatWindow) {
     e.preventDefault();
     const text = chatInput.value.trim();
     if (!text) return;
-
     appendMessage(text, "user");
     chatInput.value = "";
     appendMessage("Thinking...", "bot");
@@ -532,24 +1300,18 @@ if (chatForm && chatInput && chatWindow) {
     try {
       const res = await fetch("http://localhost:3000/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           element: lastElementForChat || null,
         }),
       });
-
       if (!res.ok) throw new Error("Server error");
-
       const data = await res.json();
-
       const last = chatWindow.querySelector(".chat-msg.bot:last-child");
       if (last && last.textContent === "Thinking...") {
         chatWindow.removeChild(last);
       }
-
       appendMessage(data.reply || "Sorry, I could not answer that.", "bot");
     } catch (err) {
       const last = chatWindow.querySelector(".chat-msg.bot:last-child");

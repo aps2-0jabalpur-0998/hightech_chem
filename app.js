@@ -686,13 +686,12 @@ function drawStaticReaction(sym1, sym2, infoText) {
 
   ctx.strokeStyle = dashed ? "#f97316" : "#38bdf8";
   ctx.lineWidth = 4;
-  if (dashed) ctx.setLineDash([10, 6]);
+  
   ctx.beginPath();
   ctx.moveTo(leftX + 35, cy);
   ctx.lineTo(rightX - 35, cy);
   ctx.stroke();
-  ctx.setLineDash([]);
-
+  
   if (!dashed && infoText.includes("double")) {
     ctx.beginPath();
     ctx.moveTo(leftX + 35, cy + 8);
@@ -829,35 +828,66 @@ function startReactionAnimation(sym1, sym2, infoText) {
       }
     }
 
-          // nobel-gas / no-bond case: draw a small red cross at the middle
+        // nobel-gas / no-bond case: only red cross, no line
     const noBond = infoText.toLowerCase().includes("no stable compound");
 
     const x1 = leftX + 35;
     const x2 = rightX - 35;
     const xMid = (x1 + x2) / 2;
 
+    // NORMAL BOND (solid line only)
     if (t > 0.5 && !noBond) {
-      // normal bond (ionic / covalent)
       const bondPhase = Math.min(1, (t - 0.5) / 0.4);
-      const dashed = isIonic;
       const drawTo = x1 + (x2 - x1) * bondPhase;
 
-      ctx.strokeStyle = dashed ? "#f97316" : "#38bdf8";
+      // solid line, no dash
+      ctx.setLineDash([]);             // <- force remove dash
+      ctx.strokeStyle = isIonic ? "#f97316" : "#38bdf8";
       ctx.lineWidth = 4;
-      if (dashed) ctx.setLineDash([10, 6]);
+
       ctx.beginPath();
       ctx.moveTo(x1, cy);
       ctx.lineTo(drawTo, cy);
       ctx.stroke();
-      ctx.setLineDash([]);
 
-      if (!dashed && isDouble) {
+      if (!isIonic && isDouble) {
         ctx.beginPath();
         ctx.moveTo(x1, cy + 8);
         ctx.lineTo(drawTo, cy + 8);
         ctx.stroke();
       }
     }
+
+    // NO-BOND CASE (e.g. noble gases) → red cross at center
+    if (t > 0.5 && noBond) {
+      ctx.setLineDash([]);             // <- just in case
+      const size = 14;
+      ctx.strokeStyle = "#f97373";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(xMid - size, cy - size);
+      ctx.lineTo(xMid + size, cy + size);
+      ctx.moveTo(xMid - size, cy + size);
+      ctx.lineTo(xMid + size, cy - size);
+      ctx.stroke();
+    }
+
+
+    // special: show red cross for no-bond cases (e.g., noble gases)
+    if (t > 0.5 && noBond) {
+      const size = 14; // cross half-length
+      ctx.strokeStyle = "#f97373";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(xMid - size, cy - size);
+      ctx.lineTo(xMid + size, cy + size);
+      ctx.moveTo(xMid - size, cy + size);
+      ctx.lineTo(xMid + size, cy - size);
+      ctx.stroke();
+    }
+
 
     // special: show red cross for no-bond cases (e.g., noble gases)
     if (t > 0.5 && noBond) {

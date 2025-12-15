@@ -1069,76 +1069,117 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
   const pulse = 1 + 0.1 * Math.sin(t);
 
   if (type === "sp") {
-    ctx.fillStyle = `rgba(96,165,250,${0.3 + 0.2 * Math.sin(t)})`;
-    ctx.beginPath(); ctx.arc(cx, cy - 30, 25 * pulse, 0, 2 * Math.PI); ctx.fill();
-    ctx.strokeStyle = "#22c55e"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(cx, cy + 30, 15, 35 * pulse, 0, 0, 2 * Math.PI); ctx.stroke();
+    // BeCl2: linear
+    const beX = cx;
+    const beY = cy;
+    const clLeftX  = cx - 140;
+    const clRightX = cx + 140;
 
-    ctx.fillStyle = "#facc15"; ctx.shadowBlur = 15; ctx.shadowColor = "#fde68a";
-    ctx.beginPath(); ctx.arc(cx - 40, cy, 20 * pulse, 0, 2 * Math.PI); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + 40, cy, 20 * pulse, 0, 2 * Math.PI); ctx.fill();
-    ctx.shadowBlur = 0;
+    bAtom(ctx, beX, beY, "Be", "#fbbf24", 22 * pulse);
+    bAtom(ctx, clLeftX,  beY, "Cl", "#22c55e", 26 * pulse);
+    bAtom(ctx, clRightX, beY, "Cl", "#22c55e", 26 * pulse);
 
-    bAtom(ctx, cx - 80, cy, "Be", "#fbbf24", 22 * pulse);
-    bAtom(ctx, cx - 120, cy, "Cl", "#22c55e", 26 * pulse);
-    bAtom(ctx, cx + 120, cy, "Cl", "#22c55e", 26 * pulse);
+    // bond lines
+    bBondLine(ctx, beX - 22, beY, clLeftX  + 26, beY, 1);
+    bBondLine(ctx, beX + 22, beY, clRightX - 26, beY, 1);
 
   } else if (type === "sp2") {
-    ctx.fillStyle = `rgba(96,165,250,0.3)`; ctx.beginPath(); ctx.arc(cx, cy, 22 * pulse, 0, 2 * Math.PI); ctx.fill();
-    ctx.strokeStyle = "#22c55e"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(cx + 35 * pulse, cy, 12, 28, 0, 0, 2 * Math.PI); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(cx, cy + 35 * pulse, 28, 12, 0, 0, 2 * Math.PI); ctx.stroke();
+    // BF3: trigonal planar
+    const bX = cx;
+    const bY = cy - 10;
+    bAtom(ctx, bX, bY, "B", "#f97316", 24 * pulse);
 
+    const r = 90;
     for (let i = 0; i < 3; i++) {
-      const angle = (i * 2 * Math.PI / 3) + Math.PI / 6;
-      const ex = cx + 55 * Math.cos(angle);
-      const ey = cy + 25 * Math.sin(angle);
-      ctx.fillStyle = "#facc15"; ctx.beginPath(); ctx.arc(ex, ey, 16 * pulse, 0, 2 * Math.PI); ctx.fill();
-    }
-
-    bAtom(ctx, cx, cy - 15, "B", "#f97316", 24 * pulse);
-    for (let i = 0; i < 3; i++) {
-      const angle = i * 2 * Math.PI / 3;
-      bAtom(ctx, cx + 75 * Math.cos(angle), cy + 35 * Math.sin(angle), "F", "#60a5fa", 24 * pulse);
+      const ang = (i * 2 * Math.PI) / 3;
+      const fx = bX + r * Math.cos(ang);
+      const fy = bY + r * Math.sin(ang);
+      bAtom(ctx, fx, fy, "F", "#60a5fa", 24 * pulse);
+      bBondLine(ctx, bX, bY, fx, fy, 1);
     }
 
   } else if (type === "sp3") {
-    const cX = cx, cY = cy;
+    // CH4: tetrahedral projection
+    const cX = cx;
+    const cY = cy;
     bAtom(ctx, cX, cY, "C", "#f97316", 28 * pulse);
+
     const positions = [
-      { x: cX, y: cY - 85 }, { x: cX + 70, y: cY + 35 }, { x: cX - 70, y: cY + 35 }, { x: cX, y: cY + 95 }
+      { x: cX, y: cY - 85 },
+      { x: cX + 70, y: cY + 35 },
+      { x: cX - 70, y: cY + 35 },
+      { x: cX, y: cY + 95 },
     ];
-    positions.forEach(p => bAtom(ctx, p.x, p.y, "H", "#fbbf24", 20 * pulse));
+    positions.forEach((p) => {
+      bAtom(ctx, p.x, p.y, "H", "#fbbf24", 20 * pulse);
+      bBondLine(ctx, cX, cY, p.x, p.y, 1);
+    });
 
   } else if (type === "dsp2") {
-    bAtom(ctx, cx, cy, "Ni", "#facc15", 28 * pulse);
-    const side = 65;
-    bAtom(ctx, cx - side, cy - side, "CN", "#22c55e", 22 * pulse);
-    bAtom(ctx, cx + side, cy - side, "CN", "#22c55e", 22 * pulse);
-    bAtom(ctx, cx - side, cy + side, "CN", "#22c55e", 22 * pulse);
-    bAtom(ctx, cx + side, cy + side, "CN", "#22c55e", 22 * pulse);
+    // Ni(CN)4^2-: square planar
+    const niX = cx;
+    const niY = cy;
+    const d = 80;
+    bAtom(ctx, niX, niY, "Ni", "#facc15", 28 * pulse);
+
+    const ligands = [
+      { x: niX - d, y: niY - d },
+      { x: niX + d, y: niY - d },
+      { x: niX - d, y: niY + d },
+      { x: niX + d, y: niY + d },
+    ];
+    ligands.forEach((p) => {
+      bAtom(ctx, p.x, p.y, "CN", "#22c55e", 22 * pulse);
+      bBondLine(ctx, niX, niY, p.x, p.y, 1);
+    });
 
   } else if (type === "sp3d") {
-    bAtom(ctx, cx, cy, "P", "#fbbf24", 26 * pulse);
-    bAtom(ctx, cx, cy - 90, "Cl", "#22c55e", 24 * pulse);
-    bAtom(ctx, cx, cy + 90, "Cl", "#22c55e", 24 * pulse);
+    // PCl5: trigonal bipyramidal
+    const pX = cx;
+    const pY = cy;
+    bAtom(ctx, pX, pY, "P", "#fbbf24", 26 * pulse);
+
+    // axial
+    const topY = pY - 100;
+    const bottomY = pY + 100;
+    bAtom(ctx, pX, topY, "Cl", "#22c55e", 22 * pulse);
+    bAtom(ctx, pX, bottomY, "Cl", "#22c55e", 22 * pulse);
+    bBondLine(ctx, pX, pY, pX, topY, 1);
+    bBondLine(ctx, pX, pY, pX, bottomY, 1);
+
+    // equatorial
+    const rEq = 85;
     for (let i = 0; i < 3; i++) {
-      const angle = i * 2 * Math.PI / 3;
-      bAtom(ctx, cx + 70 * Math.cos(angle), cy + 20 * Math.sin(angle), "Cl", "#22c55e", 24 * pulse);
+      const ang = (i * 2 * Math.PI) / 3;
+      const ex = pX + rEq * Math.cos(ang);
+      const ey = pY + 25 * Math.sin(ang);
+      bAtom(ctx, ex, ey, "Cl", "#22c55e", 22 * pulse);
+      bBondLine(ctx, pX, pY, ex, ey, 1);
     }
 
   } else if (type === "d2sp3") {
-    bAtom(ctx, cx, cy, "S", "#fbbf24", 28 * pulse);
-    const r = 75;
-    const angles = [0, 60, 120, 180, 240, 300].map(a => a * Math.PI / 180);
-    angles.forEach((angle, i) => {
-      const dist = (i < 3) ? r : r + 15;
-      const ex = cx + dist * Math.cos(angle);
-      const ey = cy + dist * Math.sin(angle);
-      bAtom(ctx, ex, ey, "F", "#60a5fa", 22 * pulse);
+    // SF6: octahedral
+    const sX = cx;
+    const sY = cy;
+    bAtom(ctx, sX, sY, "S", "#fbbf24", 28 * pulse);
+
+    const r1 = 95;
+    const r2 = 95;
+    const pts = [
+      { x: sX, y: sY - r1 },
+      { x: sX, y: sY + r1 },
+      { x: sX - r2, y: sY },
+      { x: sX + r2, y: sY },
+      { x: sX - r2 * 0.7, y: sY - r2 * 0.7 },
+      { x: sX + r2 * 0.7, y: sY + r2 * 0.7 },
+    ];
+    pts.forEach((p) => {
+      bAtom(ctx, p.x, p.y, "F", "#60a5fa", 22 * pulse);
+      bBondLine(ctx, sX, sY, p.x, p.y, 1);
     });
   }
 }
+
 
 
 // ===== BAQI SAB SAME RAHEGA =====
@@ -1233,8 +1274,8 @@ function bElectronPair(ctx, x, y, angleRad, distance) {
 
 function bBondLine(ctx, x1, y1, x2, y2, count = 1, color = "#e5e7eb") {
   ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  const offset = 5;
+  ctx.lineWidth = 2.5;
+  const offset = 4;   // yahi spacing double lines ke beech
   for (let i = 0; i < count; i++) {
     const t = (i - (count - 1) / 2) * offset;
     ctx.beginPath();
@@ -1243,6 +1284,8 @@ function bBondLine(ctx, x1, y1, x2, y2, count = 1, color = "#e5e7eb") {
     ctx.stroke();
   }
 }
+
+
 
 function drawLessonFrame(lessonId, frame) {
   const ctx = bondingCtx;
@@ -1292,23 +1335,51 @@ function drawLessonFrame(lessonId, frame) {
     bElectronPair(ctx, rightX, cy, Math.PI / 4, 40);
   }
 
-  if (lessonId === "h2o") {
-    const oX = cx;
-    const oY = cy;
-    const angle = (60 * Math.PI) / 180;
-    const r = 90;
-    const h1X = oX - r * Math.sin(angle);
-    const h1Y = oY + r * Math.cos(angle);
-    const h2X = oX + r * Math.sin(angle);
-    const h2Y = oY + r * Math.cos(angle);
-    bAtom(ctx, oX, oY, "O", "#60a5fa", 30 * pulse);
-    bAtom(ctx, h1X, h1Y, "H", "#fbbf24", 24 * pulse);
-    bAtom(ctx, h2X, h2Y, "H", "#fbbf24", 24 * pulse);
-    bBondLine(ctx, oX - 22, oY + 5, h1X + 20, h1Y - 5, 1);
-    bBondLine(ctx, oX + 22, oY + 5, h2X - 20, h2Y - 5, 1);
-    bElectronPair(ctx, oX, oY, -Math.PI / 2, 38);
-    bElectronPair(ctx, oX, oY, -Math.PI / 2 + 0.7, 42);
-  }
+  if (lessonId === "hcl") {
+  const leftX = cx - 80;
+  const rightX = cx + 80;
+
+  // time-based shift for polarity animation
+  const shift = 6 * Math.sin(t);   // t = frame * 0.02 upar defined hai
+
+  // H thoda left-right oscillate
+  const hX = leftX + shift;
+  const hY = cy;
+
+  // Cl almost fixed
+  const clX = rightX;
+  const clY = cy;
+
+  // atoms
+  bAtom(ctx, hX,  hY,  "H",  "#fbbf24", 24 * pulse);
+  bAtom(ctx, clX, clY, "Cl", "#22c55e", 30 * pulse);
+
+  // covalent bond line – orange, thoda thick
+  bBondLine(ctx, hX + 24, hY, clX - 30, clY, 1, "#f97316");
+
+  // Cl par 3 lone pairs
+  bElectronPair(ctx, clX, clY, Math.PI / 2,        40);
+  bElectronPair(ctx, clX, clY, (3 * Math.PI) / 4,  40);
+  bElectronPair(ctx, clX, clY, Math.PI / 4,        40);
+
+  // polarity arrow H → Cl (δ+ → δ−)
+  ctx.strokeStyle = "#fbbf24";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 5]);
+  ctx.lineDashOffset = -frame * 2;
+  ctx.beginPath();
+  ctx.moveTo(hX + 10, hY - 28);
+  ctx.lineTo(clX - 10, clY - 28);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // delta symbols
+  ctx.fillStyle = "#fbbf24";
+  ctx.font = "14px system-ui";
+  ctx.fillText("δ⁺", hX - 10, hY - 32);
+  ctx.fillText("δ⁻", clX + 14, clY - 32);
+}
+
 
   if (lessonId === "nh3") {
     const nX = cx;
@@ -1350,18 +1421,28 @@ function drawLessonFrame(lessonId, frame) {
   }
 
   if (lessonId === "co2") {
-    const leftX = cx - 120;
-    const rightX = cx + 120;
-    const cX = cx;
-    const cY = cy;
-    bAtom(ctx, leftX, cY, "O", "#60a5fa", 28 * pulse);
-    bAtom(ctx, cX, cY, "C", "#f97316", 30 * pulse);
-    bAtom(ctx, rightX, cY, "O", "#60a5fa", 28 * pulse);
-    bBondLine(ctx, leftX + 28, cY - 6, cX - 28, cY - 6, 2);
-    bBondLine(ctx, leftX + 28, cY + 6, cX - 28, cY + 6, 2);
-    bBondLine(ctx, cX + 28, cY - 6, rightX - 28, cY - 6, 2);
-    bBondLine(ctx, cX + 28, cY + 6, rightX - 28, cY + 6, 2);
-  }
+  const leftX = cx - 120;
+  const rightX = cx + 120;
+  const cX = cx;
+  const cY = cy;
+
+  // atoms
+  bAtom(ctx, leftX,  cY, "O", "#60a5fa", 28 * pulse);
+  bAtom(ctx, cX,     cY, "C", "#f97316", 30 * pulse);
+  bAtom(ctx, rightX, cY, "O", "#60a5fa", 28 * pulse);
+
+  // clean double bonds: 2 parallel lines each side
+  const gapO = 32;   // kitna andar se start
+  const gapC = 26;
+
+  // LEFT O = C
+  bBondLine(ctx, leftX  + gapO, cY, cX - gapC, cY, 2);
+
+  // RIGHT C = O
+  bBondLine(ctx, cX + gapC, cY, rightX - gapO, cY, 2);
+}
+
+
 
   if (lessonId === "ionic") {
     const leftX = cx - 90;
@@ -1383,23 +1464,46 @@ function drawLessonFrame(lessonId, frame) {
   }
 
   if (lessonId === "coord") {
-    const nX = cx - 40;
-    const nY = cy;
-    const hX = cx + 80;
-    const hY = cy;
-    bAtom(ctx, nX, nY, "N", "#22c55e", 30 * pulse);
-    bAtom(ctx, hX, hY, "H⁺", "#fbbf24", 24 * pulse);
-    bElectronPair(ctx, nX, nY, 0, 40);
-    ctx.strokeStyle = "#38bdf8";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 6]);
-    ctx.lineDashOffset = -frame * 3;
-    ctx.beginPath();
-    ctx.moveTo(nX + 45, nY);
-    ctx.lineTo(hX - 30, hY);
-    ctx.stroke();
-    ctx.setLineDash([]);
+  const nX = cx - 40;
+  const nY = cy;
+
+  // NH3 core (N + 3 H)
+  bAtom(ctx, nX, nY, "N", "#22c55e", 30 * pulse);
+  const r = 75;
+  const angleStep = (2 * Math.PI) / 3;
+  for (let i = 0; i < 3; i++) {
+    const a = Math.PI / 2 + i * angleStep;
+    const hx = nX + r * Math.cos(a);
+    const hy = nY + r * Math.sin(a);
+    bAtom(ctx, hx, hy, "H", "#fbbf24", 20 * pulse);
+    bBondLine(ctx, nX, nY, hx, hy, 1);
   }
+
+  // incoming H+ (NH4+ formation animation)
+  const hStartX = cx + 130;
+  const hEndX   = cx + 20;
+  const hY      = cy;
+
+  const tNorm = Math.min(1, frame * 0.02);   // 0 → 1 smooth
+  const hX    = hStartX + (hEndX - hStartX) * tNorm;
+
+  bAtom(ctx, hX, hY, "H⁺", "#fbbf24", 22 * pulse);
+
+  // lone pair on N donating
+  bElectronPair(ctx, nX, nY, 0, 40);
+
+  // dotted coordinate bond arrow N → H+
+  ctx.strokeStyle = "#38bdf8";
+  ctx.lineWidth = 3;
+  ctx.setLineDash([8, 6]);
+  ctx.lineDashOffset = -frame * 3;
+  ctx.beginPath();
+  ctx.moveTo(nX + 45, nY);
+  ctx.lineTo(hX - 25, hY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
 
   if (lessonId === "metallic") {
     const rows = 3;

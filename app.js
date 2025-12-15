@@ -469,6 +469,7 @@ const reactionDefs = {
   'C H': 'CH₄ - Tetrahedral covalent (sp³, 109.5°).',
   'H Cl': 'HCl - Polar covalent bond.',
   'C O': 'CO₂ - Linear, two double bonds (180°).',
+
   // NEW BASIC REACTIONS (ADD THESE)
   'Mg O': '2Mg + O₂ → 2MgO - Metal + Oxygen → Oxide (ionic).',
   'Fe HCl': 'Fe + 2HCl → FeCl₂ + H₂ - Metal displacement.',
@@ -482,8 +483,40 @@ const reactionDefs = {
   'Na H2O': '2Na + 2H₂O → 2NaOH + H₂ - Violent alkali reaction.',
   'K H2O': '2K + 2H₂O → 2KOH + H₂ - Even more reactive.',
   'Cu O': '2Cu + O₂ → 2CuO - Transition metal oxide.',
+
+  // NOBLE GAS REACTIONS → NO STABLE COMPOUND
+  'He He': 'No stable compound: both atoms are noble gases with filled shells.',
+  'He Ne': 'No stable compound: noble gases are largely inert.',
+  'He Ar': 'No stable compound: noble gases are largely inert.',
+  'He Kr': 'No stable compound: noble gases are largely inert.',
+  'He Xe': 'No stable compound: noble gases are largely inert.',
+  'He Rn': 'No stable compound: noble gases are largely inert.',
+  'He Og': 'No stable compound: noble gases are largely inert.',
+  'Ne Ne': 'No stable compound: noble gases have complete octets.',
+  'Ne Ar': 'No stable compound: noble gases have complete octets.',
+  'Ne Kr': 'No stable compound: noble gases have complete octets.',
+  'Ne Xe': 'No stable compound: noble gases have complete octets.',
+  'Ne Rn': 'No stable compound: noble gases have complete octets.',
+  'Ne Og': 'No stable compound: noble gases have complete octets.',
+  'Ar Ar': 'No stable compound: noble gases have complete octets.',
+  'Ar Kr': 'No stable compound: noble gases have complete octets.',
+  'Ar Xe': 'No stable compound: noble gases have complete octets.',
+  'Ar Rn': 'No stable compound: noble gases have complete octets.',
+  'Ar Og': 'No stable compound: noble gases have complete octets.',
+  'Kr Kr': 'No stable compound: noble gases have complete octets.',
+  'Kr Xe': 'No stable compound: noble gases have complete octets.',
+  'Kr Rn': 'No stable compound: noble gases have complete octets.',
+  'Kr Og': 'No stable compound: noble gases have complete octets.',
+  'Xe Xe': 'No stable compound: noble gases have complete octets.',
+  'Xe Rn': 'No stable compound: noble gases have complete octets.',
+  'Xe Og': 'No stable compound: noble gases have complete octets.',
+  'Rn Rn': 'No stable compound: noble gases have complete octets.',
+  'Rn Og': 'No stable compound: noble gases have complete octets.',
+  'Og Og': 'No stable compound: noble gases have complete octets.',
+
   'default': 'Potential compound formation based on electronegativity difference.'
 };
+
 // electronegativity (for tug of war)
 const EN = {
   H: 2.2,
@@ -589,25 +622,30 @@ let reactionAnimId = null;
 function showChemicalReaction(sym1, sym2) {
   const key1 = `${sym1} ${sym2}`;
   const key2 = `${sym2} ${sym1}`;
-  let infoText = reactionDefs[key1] || reactionDefs[key2] || reactionDefs['default'];
-  
-  // ENHANCED VOICE - detailed reaction description
-  const speech = `${sym1} plus ${sym2} forms ${infoText.split(' - ')[1] || 'compound'}. ${infoText}`;
+
+  const nobleSet = new Set(["He", "Ne", "Ar", "Kr", "Xe", "Rn", "Og"]);
+  let infoText;
+
+  if (nobleSet.has(sym1) || nobleSet.has(sym2)) {
+    infoText =
+      reactionDefs[key1] ||
+      reactionDefs[key2] ||
+      "No stable compound: noble gases are chemically inert under normal conditions.";
+  } else {
+    infoText = reactionDefs[key1] || reactionDefs[key2] || reactionDefs["default"];
+  }
+
+  const speech = `${sym1} plus ${sym2}. ${infoText}`;
   speak(speech);
-  
-  reactionTitle.textContent = `${sym1} + ${sym2}`;
-  reactionInfo.textContent = infoText;
-  reactionBackdrop.classList.remove('hidden');
-  startReactionAnimation(sym1, sym2, infoText);
 
   reactionTitle.textContent = `${sym1} + ${sym2} →`;
   reactionInfo.textContent = `${sym1} + ${sym2}: ${infoText}`;
 
   reactionBackdrop.classList.remove("hidden");
   startReactionAnimation(sym1, sym2, infoText);
-
-  speak(`${sym1} plus ${sym2}. ${infoText}`);
 }
+
+
 
 function drawReactionAtom(ctx, x, y, label, color = "#facc15", r = 28) {
   ctx.beginPath();
@@ -791,29 +829,53 @@ function startReactionAnimation(sym1, sym2, infoText) {
       }
     }
 
-    if (t > 0.5) {
+          // nobel-gas / no-bond case: draw a small red cross at the middle
+    const noBond = infoText.toLowerCase().includes("no stable compound");
+
+    const x1 = leftX + 35;
+    const x2 = rightX - 35;
+    const xMid = (x1 + x2) / 2;
+
+    if (t > 0.5 && !noBond) {
+      // normal bond (ionic / covalent)
       const bondPhase = Math.min(1, (t - 0.5) / 0.4);
       const dashed = isIonic;
-      const x1 = leftX + 35;
-      const x2 = rightX - 35;
-      const xMid = x1 + (x2 - x1) * bondPhase;
+      const drawTo = x1 + (x2 - x1) * bondPhase;
 
       ctx.strokeStyle = dashed ? "#f97316" : "#38bdf8";
       ctx.lineWidth = 4;
       if (dashed) ctx.setLineDash([10, 6]);
       ctx.beginPath();
       ctx.moveTo(x1, cy);
-      ctx.lineTo(xMid, cy);
+      ctx.lineTo(drawTo, cy);
       ctx.stroke();
       ctx.setLineDash([]);
 
       if (!dashed && isDouble) {
         ctx.beginPath();
         ctx.moveTo(x1, cy + 8);
-        ctx.lineTo(xMid, cy + 8);
+        ctx.lineTo(drawTo, cy + 8);
         ctx.stroke();
       }
     }
+
+    // special: show red cross for no-bond cases (e.g., noble gases)
+    if (t > 0.5 && noBond) {
+      const size = 14; // cross half-length
+      ctx.strokeStyle = "#f97373";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(xMid - size, cy - size);
+      ctx.lineTo(xMid + size, cy + size);
+      ctx.moveTo(xMid - size, cy + size);
+      ctx.lineTo(xMid + size, cy - size);
+      ctx.stroke();
+    }
+
+
+
+
 
     if (t > 0.8) {
       const ldPhase = Math.min(1, (t - 0.8) / 0.2);

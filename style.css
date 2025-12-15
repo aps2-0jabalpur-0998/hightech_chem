@@ -354,13 +354,17 @@ body {
   background: linear-gradient(135deg, #38bdf8, #22c55e);
   box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
 }
+
+/* YAHAN CANVAS KO BADA KIYA HAI */
 .bonding-canvas {
-  flex: 1;
+  flex: 0 0 340px;  /* height badha di, bonds clear dikhenge */
+  width: 100%;
   border-radius: 16px;
   background: radial-gradient(circle at center, #0b1120 0, #020617 60%, #000 100%);
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
   margin-bottom: 16px;
 }
+
 .bonding-info {
   background: rgba(17, 24, 39, 0.9);
   padding: 16px;

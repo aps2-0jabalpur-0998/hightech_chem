@@ -958,6 +958,10 @@ const bondingCanvas = document.getElementById("bonding-canvas");
 const bondingCtx = bondingCanvas ? bondingCanvas.getContext("2d") : null;
 const bondingInfo = document.getElementById("bonding-info");
 
+// ===== COPY YOUR EXISTING app.js COMPLETELY TILL bondingLessons array =====
+// ... (sab kuch same rahega - voice, reactions, CH4, NH3, H2O etc.)
+
+// ===== HYBRIDISATION LESSONS ADD HERE (bondingLessons array ke END mein) =====
 const bondingLessons = [
   {
     id: "intro",
@@ -1019,7 +1023,127 @@ const bondingLessons = [
     desc: "Delocalised electrons",
     info: "Positive Cu ions in a sea of electrons.",
   },
+
+  // ===== NEW HYBRIDISATION LESSONS =====
+  {
+    id: "sp",
+    title: "sp Hybridisation",
+    desc: "Linear 180° (BeCl₂)",
+    info: "1s + 1p → 2 sp orbitals. Linear geometry, bond angle 180°."
+  },
+  {
+    id: "sp2",
+    title: "sp² Hybridisation",
+    desc: "Trigonal 120° (BF₃)",
+    info: "1s + 2p → 3 sp² orbitals. Planar triangle, bond angle 120°."
+  },
+  {
+    id: "sp3",
+    title: "sp³ Hybridisation",
+    desc: "Tetrahedral 109.5° (CH₄)",
+    info: "1s + 3p → 4 sp³ orbitals. Perfect tetrahedron for CH₄."
+  },
+  {
+    id: "dsp2",
+    title: "dsp² Hybridisation",
+    desc: "Square planar (Ni(CN)₄²⁻)",
+    info: "1d + 1s + 2p → 4 dsp² orbitals. Square planar complex."
+  },
+  {
+    id: "sp3d",
+    title: "sp³d Hybridisation",
+    desc: "Trigonal bipyramidal (PCl₅)",
+    info: "1s + 3p + 1d → 5 sp³d orbitals. 3 equatorial + 2 axial."
+  },
+  {
+    id: "d2sp3",
+    title: "d²sp³ Hybridisation",
+    desc: "Octahedral (SF₆)",
+    info: "2d + 1s + 3p → 6 d²sp³ orbitals. Perfect octahedron."
+  }
 ];
+
+// ===== UPDATE drawLessonFrame FUNCTION (add this case) =====
+function drawHybridOrbitals(ctx, cx, cy, type, frame) {
+  const t = frame * 0.015;
+  const pulse = 1 + 0.1 * Math.sin(t);
+
+  if (type === "sp") {
+    ctx.fillStyle = `rgba(96,165,250,${0.3 + 0.2 * Math.sin(t)})`;
+    ctx.beginPath(); ctx.arc(cx, cy - 30, 25 * pulse, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = "#22c55e"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx, cy + 30, 15, 35 * pulse, 0, 0, 2 * Math.PI); ctx.stroke();
+
+    ctx.fillStyle = "#facc15"; ctx.shadowBlur = 15; ctx.shadowColor = "#fde68a";
+    ctx.beginPath(); ctx.arc(cx - 40, cy, 20 * pulse, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 40, cy, 20 * pulse, 0, 2 * Math.PI); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    bAtom(ctx, cx - 80, cy, "Be", "#fbbf24", 22 * pulse);
+    bAtom(ctx, cx - 120, cy, "Cl", "#22c55e", 26 * pulse);
+    bAtom(ctx, cx + 120, cy, "Cl", "#22c55e", 26 * pulse);
+
+  } else if (type === "sp2") {
+    ctx.fillStyle = `rgba(96,165,250,0.3)`; ctx.beginPath(); ctx.arc(cx, cy, 22 * pulse, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = "#22c55e"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx + 35 * pulse, cy, 12, 28, 0, 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx, cy + 35 * pulse, 28, 12, 0, 0, 2 * Math.PI); ctx.stroke();
+
+    for (let i = 0; i < 3; i++) {
+      const angle = (i * 2 * Math.PI / 3) + Math.PI / 6;
+      const ex = cx + 55 * Math.cos(angle);
+      const ey = cy + 25 * Math.sin(angle);
+      ctx.fillStyle = "#facc15"; ctx.beginPath(); ctx.arc(ex, ey, 16 * pulse, 0, 2 * Math.PI); ctx.fill();
+    }
+
+    bAtom(ctx, cx, cy - 15, "B", "#f97316", 24 * pulse);
+    for (let i = 0; i < 3; i++) {
+      const angle = i * 2 * Math.PI / 3;
+      bAtom(ctx, cx + 75 * Math.cos(angle), cy + 35 * Math.sin(angle), "F", "#60a5fa", 24 * pulse);
+    }
+
+  } else if (type === "sp3") {
+    const cX = cx, cY = cy;
+    bAtom(ctx, cX, cY, "C", "#f97316", 28 * pulse);
+    const positions = [
+      { x: cX, y: cY - 85 }, { x: cX + 70, y: cY + 35 }, { x: cX - 70, y: cY + 35 }, { x: cX, y: cY + 95 }
+    ];
+    positions.forEach(p => bAtom(ctx, p.x, p.y, "H", "#fbbf24", 20 * pulse));
+
+  } else if (type === "dsp2") {
+    bAtom(ctx, cx, cy, "Ni", "#facc15", 28 * pulse);
+    const side = 65;
+    bAtom(ctx, cx - side, cy - side, "CN", "#22c55e", 22 * pulse);
+    bAtom(ctx, cx + side, cy - side, "CN", "#22c55e", 22 * pulse);
+    bAtom(ctx, cx - side, cy + side, "CN", "#22c55e", 22 * pulse);
+    bAtom(ctx, cx + side, cy + side, "CN", "#22c55e", 22 * pulse);
+
+  } else if (type === "sp3d") {
+    bAtom(ctx, cx, cy, "P", "#fbbf24", 26 * pulse);
+    bAtom(ctx, cx, cy - 90, "Cl", "#22c55e", 24 * pulse);
+    bAtom(ctx, cx, cy + 90, "Cl", "#22c55e", 24 * pulse);
+    for (let i = 0; i < 3; i++) {
+      const angle = i * 2 * Math.PI / 3;
+      bAtom(ctx, cx + 70 * Math.cos(angle), cy + 20 * Math.sin(angle), "Cl", "#22c55e", 24 * pulse);
+    }
+
+  } else if (type === "d2sp3") {
+    bAtom(ctx, cx, cy, "S", "#fbbf24", 28 * pulse);
+    const r = 75;
+    const angles = [0, 60, 120, 180, 240, 300].map(a => a * Math.PI / 180);
+    angles.forEach((angle, i) => {
+      const dist = (i < 3) ? r : r + 15;
+      const ex = cx + dist * Math.cos(angle);
+      const ey = cy + dist * Math.sin(angle);
+      bAtom(ctx, ex, ey, "F", "#60a5fa", 22 * pulse);
+    });
+  }
+}
+
+
+// ===== BAQI SAB SAME RAHEGA =====
+// Voice search, reactions, atom modal - NOTHING CHANGES!
+
 
 let bondingAnimId = null;
 
@@ -1133,12 +1257,17 @@ function drawLessonFrame(lessonId, frame) {
   const t = frame * 0.02;
   const pulse = 1 + 0.05 * Math.sin(t);
 
+  // ===== BASIC LESSONS =====
   if (lessonId === "intro") {
     ctx.fillStyle = "#e5e7eb";
     ctx.font = "18px system-ui";
     ctx.textAlign = "center";
     ctx.fillText("Octet rule → 8 valence electrons (H/He duplet).", cx, cy - 40);
-    ctx.fillText("Ionic: transfer | Covalent: sharing | Metallic: electron sea", cx, cy);
+    ctx.fillText(
+      "Ionic: transfer | Covalent: sharing | Metallic: electron sea",
+      cx,
+      cy
+    );
     ctx.fillText("Coordinate: lone pair donation (NH₄⁺).", cx, cy + 40);
   }
 
@@ -1294,8 +1423,27 @@ function drawLessonFrame(lessonId, frame) {
     }
   }
 
+  // ===== HYBRIDISATION CASES =====
+  const hybridTypes = ["sp", "sp2", "sp3", "dsp2", "sp3d", "d2sp3"];
+  if (hybridTypes.includes(lessonId)) {
+    const cx2 = cx;
+    const cy2 = cy + 10;
+    drawHybridOrbitals(ctx, cx2, cy2, lessonId, frame);
+
+    ctx.fillStyle = "#facc15";
+    ctx.font = "bold 18px system-ui";
+    ctx.textAlign = "center";
+    if (lessonId === "sp") ctx.fillText("180°", cx2, cy2 + 130);
+    else if (lessonId === "sp2") ctx.fillText("120°", cx2, cy2 + 130);
+    else if (lessonId === "sp3") ctx.fillText("109.5°", cx2, cy2 + 130);
+    else if (lessonId === "dsp2") ctx.fillText("90° (square planar)", cx2, cy2 + 130);
+    else if (lessonId === "sp3d") ctx.fillText("90° / 120°", cx2, cy2 + 130);
+    else if (lessonId === "d2sp3") ctx.fillText("90° (octahedral)", cx2, cy2 + 130);
+  }
+
   bondingAnimId = requestAnimationFrame((f) => drawLessonFrame(lessonId, f + 1));
 }
+
 
 if (bondingBtn) bondingBtn.addEventListener("click", showBondingModal);
 
@@ -1418,3 +1566,5 @@ if (chatForm && chatInput && chatWindow) {
     }
   });
 }
+
+

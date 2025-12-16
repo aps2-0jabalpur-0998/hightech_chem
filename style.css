@@ -357,7 +357,7 @@ body {
 
 /* YAHAN CANVAS KO BADA KIYA HAI */
 .bonding-canvas {
-  flex: 0 0 340px;  /* height badha di, bonds clear dikhenge */
+  flex: 0 0 340px;
   width: 100%;
   border-radius: 16px;
   background: radial-gradient(circle at center, #0b1120 0, #020617 60%, #000 100%);
@@ -455,6 +455,179 @@ body {
   cursor: pointer;
 }
 
+/* QUIZ + SCORE MODE (ADDED) */
+.quiz-controls {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.quiz-btn {
+  background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+}
+
+.quiz-btn:hover {
+  filter: brightness(1.05);
+}
+
+.score-display {
+  background: rgba(15, 23, 42, 0.95);
+  color: #fef08a;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+/* Quiz modal */
+.quiz-modal {
+  width: min(480px, 95vw);
+  max-height: 90vh;
+  margin: auto;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 0 30px rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#quiz-title {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+}
+
+#quiz-modes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.mode-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #8b5cf6;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.7rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mode-btn.active,
+.mode-btn:hover {
+  background: #8b5cf6;
+}
+
+.quiz-game {
+  text-align: center;
+}
+
+#question-display {
+  font-size: 1.4rem;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+#quiz-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.option-btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #22c55e;
+  background: rgba(21, 128, 61, 0.2);
+  color: #e5e7eb;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.option-btn:hover {
+  filter: brightness(1.05);
+}
+
+#quiz-input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,0.6);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 8px 0;
+}
+
+.quiz-timer {
+  font-size: 0.9rem;
+  color: #f97316;
+  font-weight: 600;
+  margin: 6px 0;
+}
+
+#quiz-submit,
+#quiz-restart {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #22c55e;
+  color: #020617;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.quiz-results {
+  text-align: center;
+}
+
+#quiz-score {
+  font-size: 1.2rem;
+  margin: 8px 0;
+}
+
 /* MOBILE */
 @media (max-width: 768px) {
   .modal {
@@ -470,4 +643,23 @@ body {
   .lessons-grid {
     grid-template-columns: 1fr;
   }
+  .quiz-controls {
+    top: 8px;
+    right: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  #quiz-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* question pulse animation */
+.q-pulse {
+  animation: qPulse 0.35s ease-out;
+}
+
+@keyframes qPulse {
+  0% { transform: scale(0.96); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
 }

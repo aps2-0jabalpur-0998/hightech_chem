@@ -1671,4 +1671,297 @@ if (chatForm && chatInput && chatWindow) {
   });
 }
 
+// ===== QUIZ + SCORE SYSTEM 🎮 =====
 
+// DOM references
+const quizBtn = document.getElementById("quiz-btn");
+const quizModal = document.getElementById("quiz-modal");
+const quizClose = document.getElementById("quiz-close");
+const scoreDisplay = document.getElementById("score-display");
+const quizModesEl = document.getElementById("quiz-modes");
+const quizGameEl = document.getElementById("quiz-game");
+const quizResultsEl = document.getElementById("quiz-results");
+const questionDisplay = document.getElementById("question-display");
+const quizOptionsEl = document.getElementById("quiz-options");
+const quizInputEl = document.getElementById("quiz-input");
+const timerEl = document.getElementById("timer");
+const quizSubmitBtn = document.getElementById("quiz-submit");
+const quizScoreEl = document.getElementById("quiz-score");
+const quizRestartBtn = document.getElementById("quiz-restart");
+
+let quizState = {
+  mode: "mixed",   // symbol | atomic | mixed
+  score: 0,
+  total: 10,
+  time: 30,
+  timerId: null,
+  questions: [],
+  currentIdx: 0,
+};
+
+// --- helpers ---
+function shuffleArray(arr) {
+  return arr
+    .map((x) => ({ x, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .map((p) => p.x);
+}
+
+function getRandomElements(count) {
+  return shuffleArray(elements).slice(0, count);
+}
+
+// --- localStorage score ---
+function loadBestScore() {
+  if (!scoreDisplay) return;
+  const best = Number(localStorage.getItem("periodicQuizBest") || 0);
+  scoreDisplay.textContent = `Best: ${best}%`;
+}
+loadBestScore();
+
+function saveBestScore(percent) {
+  const best = Number(localStorage.getItem("periodicQuizBest") || 0);
+  if (percent > best) {
+    localStorage.setItem("periodicQuizBest", String(percent));
+    loadBestScore();
+    speak(`New best score: ${percent} percent!`);
+  }
+}
+
+// --- question generation ---
+function generateQuestions() {
+  const qs = [];
+  if (quizState.mode === "symbol") {
+    getRandomElements(quizState.total).forEach((el) => {
+      const wrong = shuffleArray(
+        elements.filter((e) => e.sym !== el.sym)
+      ).slice(0, 3);
+      const options = shuffleArray([
+        el.name,
+        ...wrong.map((w) => w.name),
+      ]);
+      qs.push({
+        type: "symbol",
+        correct: el.name,
+        sym: el.sym,
+        options,
+      });
+    });
+  } else if (quizState.mode === "atomic") {
+    getRandomElements(quizState.total).forEach((el) => {
+      qs.push({
+        type: "atomic",
+        correct: String(el.z),
+        name: el.name,
+      });
+    });
+  } else {
+    // mixed: 5 symbol + 5 atomic
+    const symEls = getRandomElements(5);
+    const atEls = getRandomElements(5);
+    symEls.forEach((el) => {
+      const wrong = shuffleArray(
+        elements.filter((e) => e.sym !== el.sym)
+      ).slice(0, 3);
+      const options = shuffleArray([
+        el.name,
+        ...wrong.map((w) => w.name),
+      ]);
+      qs.push({
+        type: "symbol",
+        correct: el.name,
+        sym: el.sym,
+        options,
+      });
+    });
+    atEls.forEach((el) => {
+      qs.push({
+        type: "atomic",
+        correct: String(el.z),
+        name: el.name,
+      });
+    });
+    shuffleArray(qs);
+  }
+  return qs;
+}
+
+// --- timer animation ---
+function startTimer() {
+  if (!timerEl) return;
+  clearInterval(quizState.timerId);
+  quizState.time = 30;
+  timerEl.textContent = quizState.time;
+  quizState.timerId = setInterval(() => {
+    quizState.time -= 1;
+    timerEl.textContent = quizState.time;
+    if (quizState.time <= 0) {
+      clearInterval(quizState.timerId);
+      // time out → wrong
+      handleAnswer(false);
+    }
+  }, 1000);
+}
+
+// --- render question ---
+function showQuestion() {
+  if (!questionDisplay) return;
+
+  if (quizState.currentIdx >= quizState.total) {
+    return showResults();
+  }
+
+  const q = quizState.questions[quizState.currentIdx];
+
+  // pulse animation
+  questionDisplay.classList.remove("q-pulse");
+  void questionDisplay.offsetWidth;
+  questionDisplay.classList.add("q-pulse");
+
+  if (q.type === "symbol") {
+    // SYMBOL → NAME (MCQ)
+    questionDisplay.innerHTML = `<span class="symbol">${q.sym}</span>`;
+
+    quizOptionsEl.classList.remove("hidden");
+    quizInputEl.classList.add("hidden");
+    if (quizSubmitBtn) quizSubmitBtn.classList.add("hidden");
+
+    quizOptionsEl.innerHTML = q.options
+      .map(
+        (opt) =>
+          `<button class="option-btn" data-val="${opt}">${opt}</button>`
+      )
+      .join("");
+
+    quizOptionsEl.querySelectorAll(".option-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chosen = btn.getAttribute("data-val");
+        const correct = chosen === q.correct;
+        if (correct) {
+          btn.style.boxShadow = "0 0 12px rgba(34,197,94,0.8)";
+        } else {
+          btn.style.boxShadow = "0 0 12px rgba(239,68,68,0.8)";
+        }
+        handleAnswer(correct);
+      });
+    });
+  } else {
+    // NAME → ATOMIC NUMBER (sirf likhne ka)
+    questionDisplay.innerHTML = `Atomic number of <strong>${q.name}</strong>?`;
+
+    // 👇 yahan options full hide
+    quizOptionsEl.classList.add("hidden");
+    quizInputEl.classList.remove("hidden");
+    if (quizSubmitBtn) quizSubmitBtn.classList.remove("hidden");
+
+    quizInputEl.value = "";
+    quizInputEl.focus();
+  }
+
+  startTimer(); // agar tere code me hai to ye line rehne de
+}
+
+
+// --- answer handling ---
+function handleAnswer(isCorrect) {
+  clearInterval(quizState.timerId);
+  if (isCorrect) quizState.score += 1;
+  quizState.currentIdx += 1;
+
+  // short delay for animation
+  setTimeout(() => {
+    showQuestion();
+  }, 700);
+}
+
+// submit for input-based question
+if (quizSubmitBtn && quizInputEl) {
+  quizSubmitBtn.addEventListener("click", () => {
+    const q = quizState.questions[quizState.currentIdx];
+    if (!q || q.type !== "atomic") return;   // sirf atomic ke liye
+    const ans = quizInputEl.value.trim();
+    handleAnswer(ans === q.correct);
+  });
+
+  quizInputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      quizSubmitBtn.click();
+    }
+  });
+}
+
+// --- results ---
+function showResults() {
+  if (!quizGameEl || !quizResultsEl || !quizScoreEl) return;
+  quizGameEl.classList.add("hidden");
+  quizResultsEl.classList.remove("hidden");
+  const percent = Math.round((quizState.score / quizState.total) * 100);
+  quizScoreEl.textContent = `Score: ${quizState.score}/${quizState.total} (${percent}%)`;
+  saveBestScore(percent);
+}
+
+// --- mode buttons + main button ---
+function initQuiz() {
+  if (!quizModal || !quizModesEl || !quizGameEl) return;
+
+  // mode buttons
+  quizModesEl.querySelectorAll(".mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      quizModesEl.querySelectorAll(".mode-btn").forEach((b) =>
+        b.classList.remove("active")
+      );
+      btn.classList.add("active");
+      quizState.mode = btn.dataset.mode || "mixed";
+      startQuiz();
+    });
+  });
+
+  // open button
+  if (quizBtn) {
+    quizBtn.addEventListener("click", () => {
+      quizModal.classList.remove("hidden");
+      quizResultsEl.classList.add("hidden");
+      quizGameEl.classList.add("hidden");
+      quizModesEl.classList.remove("hidden");
+      speak("Select quiz mode and test yourself.");
+    });
+  }
+
+  // close handlers
+  if (quizClose) {
+    quizClose.addEventListener("click", () => {
+      quizModal.classList.add("hidden");
+      clearInterval(quizState.timerId);
+    });
+  }
+
+  if (quizModal) {
+    quizModal.addEventListener("click", (e) => {
+      if (e.target === quizModal) {
+        quizModal.classList.add("hidden");
+        clearInterval(quizState.timerId);
+      }
+    });
+  }
+
+  if (quizRestartBtn) {
+    quizRestartBtn.addEventListener("click", () => {
+      quizResultsEl.classList.add("hidden");
+      quizModesEl.classList.remove("hidden");
+    });
+  }
+}
+
+function startQuiz() {
+  quizState.questions = generateQuestions();
+  quizState.currentIdx = 0;
+  quizState.score = 0;
+  quizResultsEl.classList.add("hidden");
+  quizModesEl.classList.add("hidden");
+  quizGameEl.classList.remove("hidden");
+  showQuestion();
+}
+
+// init after DOM
+document.addEventListener("DOMContentLoaded", initQuiz);

@@ -1579,18 +1579,33 @@ if (Recognition) {
   recognition.maxAlternatives = 1;
 
   recognition.addEventListener('result', e => {
-  const transcript = e.results[0][0].transcript.trim().toLowerCase();
-  
-  // NEW: Reaction query detection
-  if (transcript.includes('reaction') || transcript.includes('plus') || transcript.includes('+')) {
-    speak('Drag elements to reaction circles to see chemical reactions!');
-    return;
-  }
-  
-  const found = elements.find(el => 
-    el.name.toLowerCase().includes(transcript) || 
-    el.sym.toLowerCase() === transcript
-  );
+    let transcript = e.results[0][0].transcript.trim().toLowerCase();
+
+    // CLEAN TRANSCRIPT FOR BETTER MATCHING
+    transcript = transcript.replace(/[^\w\s]/g, '').trim();
+    transcript = transcript.replace(/\s*(element|say|the)\s*/g, '').trim();
+    const words = transcript.split(/\s+/).filter(w => w.length > 1);
+    transcript = words.join(' ').substring(0, 15);
+
+    console.log('VOICE TRANSCRIPT =', transcript);
+
+
+    // NEW: Reaction query detection
+    if (transcript.includes('reaction') || transcript.includes('plus') || transcript.includes('+')) {
+      speak('Drag elements to reaction circles to see chemical reactions!');
+      return;
+    }
+
+    const found = elements.find(el => {
+  const name = el.name.toLowerCase();
+  const sym  = el.sym.toLowerCase();
+
+  if (name === transcript || sym === transcript) return true;      // exact
+  if (name.includes(transcript)) return true;                      // "carb" in "carbon"
+  if (transcript.includes(name)) return true;                      // "carbon element"
+  return false;
+});
+
 
     if (found) {
       speak(`Opening ${found.name}.`);
@@ -1600,6 +1615,7 @@ if (Recognition) {
     }
   });
 }
+
 
 if (voiceBtn && recognition) {
   voiceBtn.addEventListener("click", () => {

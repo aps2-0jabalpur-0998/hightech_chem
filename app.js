@@ -469,6 +469,8 @@ const reactionDefs = {
   'C H': 'CH₄ - Tetrahedral covalent (sp³, 109.5°).',
   'H Cl': 'HCl - Polar covalent bond.',
   'C O': 'CO₂ - Linear, two double bonds (180°).',
+  'N N': 'N₂ – Triple covalent bond, very strong (3 shared pairs).',
+  'O O': 'O₂ – Double covalent bond, typical diatomic molecule.',
 
   // NEW BASIC REACTIONS (ADD THESE)
   'Mg O': '2Mg + O₂ → 2MgO - Metal + Oxygen → Oxide (ionic).',
@@ -716,8 +718,12 @@ function startReactionAnimation(sym1, sym2, infoText) {
 
   const totalFrames = 200;
 
-  const isIonic = infoText.includes("Ionic");
-  const isDouble = infoText.includes("double");
+  const lowerInfo = infoText.toLowerCase();
+  const isIonic  = lowerInfo.includes("ionic");
+  const isDouble = lowerInfo.includes("double");
+  const isTriple = lowerInfo.includes("triple");
+  console.log('REACTION INFO=', infoText, 'isTriple', isTriple);
+ 
   const en1 = EN[sym1] || 2.0;
   const en2 = EN[sym2] || 2.0;
   const highENRight = en2 > en1;
@@ -836,27 +842,41 @@ function startReactionAnimation(sym1, sym2, infoText) {
     const xMid = (x1 + x2) / 2;
 
     // NORMAL BOND (solid line only)
-    if (t > 0.5 && !noBond) {
-      const bondPhase = Math.min(1, (t - 0.5) / 0.4);
-      const drawTo = x1 + (x2 - x1) * bondPhase;
+    // NORMAL BOND (single/double/triple line)
+if (t > 0.5 && !noBond) {
+  const bondPhase = Math.min(1, (t - 0.5) / 0.4);
+  const drawTo = x1 + (x2 - x1) * bondPhase;
 
-      // solid line, no dash
-      ctx.setLineDash([]);             // <- force remove dash
-      ctx.strokeStyle = isIonic ? "#f97316" : "#38bdf8";
-      ctx.lineWidth = 4;
+  ctx.setLineDash([]); // no dash
+  ctx.strokeStyle = isIonic ? "#f97316" : "#38bdf8";
+  ctx.lineWidth = 4;
 
+  // centre line
+  ctx.beginPath();
+  ctx.moveTo(x1, cy);
+  ctx.lineTo(drawTo, cy);
+  ctx.stroke();
+
+  // extra lines only for covalent double / triple
+  if (!isIonic && (isDouble || isTriple)) {
+    const offset = 8;
+
+    // upper line
+    ctx.beginPath();
+    ctx.moveTo(x1, cy - offset);
+    ctx.lineTo(drawTo, cy - offset);
+    ctx.stroke();
+
+    // third line only if triple
+    if (isTriple) {
       ctx.beginPath();
-      ctx.moveTo(x1, cy);
-      ctx.lineTo(drawTo, cy);
+      ctx.moveTo(x1, cy + offset);
+      ctx.lineTo(drawTo, cy + offset);
       ctx.stroke();
-
-      if (!isIonic && isDouble) {
-        ctx.beginPath();
-        ctx.moveTo(x1, cy + 8);
-        ctx.lineTo(drawTo, cy + 8);
-        ctx.stroke();
-      }
     }
+  }
+}
+
 
     // NO-BOND CASE (e.g. noble gases) → red cross at center
     if (t > 0.5 && noBond) {
@@ -1314,15 +1334,35 @@ function drawLessonFrame(lessonId, frame) {
     ctx.fillText("Coordinate: lone pair donation (NH₄⁺).", cx, cy + 40);
   }
 
-  if (lessonId === "h2") {
-    const leftX = cx - 80;
-    const rightX = cx + 80;
-    bAtom(ctx, leftX, cy, "H", "#fbbf24", 24 * pulse);
-    bAtom(ctx, rightX, cy, "H", "#fbbf24", 24 * pulse);
-    bBondLine(ctx, leftX + 24, cy, rightX - 24, cy, 1);
-    bElectronPair(ctx, leftX, cy, Math.PI / 2, 40);
-    bElectronPair(ctx, rightX, cy, -Math.PI / 2, 40);
-  }
+  if (lessonId === "h2o") {
+  const oX = cx;
+  const oY = cy - 10;
+
+  // Center O atom
+  bAtom(ctx, oX, oY, "O", "#60a5fa", 30 * pulse);
+
+  // Bent geometry ~104.5°
+  const r = 95;
+  const angle = (104.5 * Math.PI) / 180 / 2;
+
+  const h1X = oX - r * Math.sin(angle);
+  const h1Y = oY + r * Math.cos(angle);
+  const h2X = oX + r * Math.sin(angle);
+  const h2Y = oY + r * Math.cos(angle);
+
+  // H atoms
+  bAtom(ctx, h1X, h1Y, "H", "#fbbf24", 22 * pulse);
+  bAtom(ctx, h2X, h2Y, "H", "#fbbf24", 22 * pulse);
+
+  // O–H bonds
+  bBondLine(ctx, oX, oY, h1X, h1Y, 1);
+  bBondLine(ctx, oX, oY, h2X, h2Y, 1);
+
+  // Two lone pairs on O
+  bElectronPair(ctx, oX, oY, Math.PI / 2, 40);
+  bElectronPair(ctx, oX, oY, -Math.PI / 2, 40);
+}
+
 
   if (lessonId === "hcl") {
     const leftX = cx - 80;

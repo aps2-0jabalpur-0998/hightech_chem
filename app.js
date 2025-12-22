@@ -1618,33 +1618,64 @@ if (Recognition) {
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
-  recognition.addEventListener('result', e => {
+  recognition.addEventListener("result", (e) => {
+    console.log("RESULT EVENT FIRED");
+
     let transcript = e.results[0][0].transcript.trim().toLowerCase();
 
     // CLEAN TRANSCRIPT FOR BETTER MATCHING
-    transcript = transcript.replace(/[^\w\s]/g, '').trim();
-    transcript = transcript.replace(/\s*(element|say|the)\s*/g, '').trim();
-    const words = transcript.split(/\s+/).filter(w => w.length > 1);
-    transcript = words.join(' ').substring(0, 15);
+    transcript = transcript.replace(/[^\w\s]/g, "").trim();                 // . , ? ! hatao
+    transcript = transcript.replace(/\s*(element|say|the)\s*/g, "").trim(); // extra words
+    const words = transcript.split(/\s+/).filter((w) => w.length > 1);
+    transcript = words.join(" ").substring(0, 20);
 
-    console.log('VOICE TRANSCRIPT =', transcript);
+    console.log("VOICE TRANSCRIPT =", transcript);
 
-
-    // NEW: Reaction query detection
-    if (transcript.includes('reaction') || transcript.includes('plus') || transcript.includes('+')) {
-      speak('Drag elements to reaction circles to see chemical reactions!');
+    // Reaction queries
+    if (
+      transcript.includes("reaction") ||
+      transcript.includes("plus") ||
+      transcript.includes("+")
+    ) {
+      speak("Drag elements to reaction circles to see chemical reactions!");
       return;
     }
 
-    const found = elements.find(el => {
-  const name = el.name.toLowerCase();
-  const sym  = el.sym.toLowerCase();
+    // SMART ELEMENT MATCHING
+    let found = elements.find((el) => {
+      const name = el.name.toLowerCase();
+      const sym  = el.sym.toLowerCase();
 
-  if (name === transcript || sym === transcript) return true;      // exact
-  if (name.includes(transcript)) return true;                      // "carb" in "carbon"
-  if (transcript.includes(name)) return true;                      // "carbon element"
-  return false;
-});
+      // exact name / symbol
+      if (name === transcript || sym === transcript) return true;
+
+      // transcript inside name  (carb in carbon, oxy in oxygen)
+      if (name.includes(transcript)) return true;
+
+      // name inside transcript (carbon element, open carbon)
+      if (transcript.includes(name)) return true;
+
+      return false;
+    });
+
+    // EXTRA FALLBACKS FOR COMMON CASES
+    if (!found) {
+      // first word only (e.g. "carbon element" -> "carbon")
+      const firstWord = transcript.split(/\s+/)[0];
+      found = elements.find(
+        (el) =>
+          el.name.toLowerCase() === firstWord ||
+          el.sym.toLowerCase() === firstWord
+      );
+    }
+
+    if (
+  !found &&
+  (transcript.startsWith("carb") || transcript.startsWith("karb"))
+) {
+  // special: any sound-like karbon / carbon -> Carbon
+  found = elements.find((el) => el.name === "Carbon");
+}
 
 
     if (found) {
@@ -1656,17 +1687,17 @@ if (Recognition) {
   });
 }
 
-
 if (voiceBtn && recognition) {
   voiceBtn.addEventListener("click", () => {
     try {
       recognition.start();
-      speak("Say the element name or symbol, for example hydrogen or H.");
+      speak("Say the element name or symbol, for example carbon or H.");
     } catch {
       // ignore double start
     }
   });
 }
+
 
 // ===== AI CHATBOT INTEGRATION =====
 const chatForm = document.getElementById("chat-form");

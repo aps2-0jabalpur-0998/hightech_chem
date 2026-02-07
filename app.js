@@ -1,4 +1,4 @@
-// ===== 118-element data (Z,symbol,name,period,group,block) =====
+// element data
 const RAW_DATA = `1,H,Hydrogen,1,1,s
 2,He,Helium,1,18,s
 3,Li,Lithium,2,1,s
@@ -131,7 +131,7 @@ const elements = RAW_DATA.trim().split("\n").map((line) => {
   };
 });
 
-// ===== VOICE HANDLING =====
+
 let allVoices = [];
 let currentVoice = null;
 
@@ -185,7 +185,7 @@ function speak(text) {
   window.speechSynthesis.speak(utter);
 }
 
-// ===== TABLE RENDER =====
+
 const tableDiv = document.getElementById("table");
 
 elements.forEach((el) => {
@@ -241,7 +241,7 @@ elements.forEach((el) => {
   cell.appendChild(robo);
   cell.appendChild(roboDot);
 
-  // drag support for reaction circles
+
   cell.draggable = true;
   cell.dataset.symbol = el.sym;
   cell.dataset.name = el.name;
@@ -271,7 +271,7 @@ elements.forEach((el) => {
   tableDiv.appendChild(cell);
 });
 
-// ===== FILTERING =====
+
 const filterSelect = document.getElementById("filter-select");
 
 function applyFilter() {
@@ -291,7 +291,7 @@ if (filterSelect) {
   filterSelect.addEventListener("change", applyFilter);
 }
 
-// ===== MODAL + CANVAS (element) =====
+
 const backdrop = document.getElementById("modal-backdrop");
 const closeBtn = document.getElementById("modal-close");
 const titleEl = document.getElementById("el-title");
@@ -454,7 +454,7 @@ function animateAtom(frame) {
 }
 animateAtom(0);
 
-// ===== REACTION SYSTEM (click + drag) =====
+
 let reactLeft = null;
 let reactRight = null;
 
@@ -519,7 +519,7 @@ const reactionDefs = {
   'default': 'Potential compound formation based on electronegativity difference.'
 };
 
-// electronegativity (for tug of war)
+
 const EN = {
   H: 2.2,
   C: 2.55,
@@ -611,7 +611,7 @@ if (reactRunBtn) {
   });
 }
 
-// ===== REACTION MODAL DRAWING + ANIMATION =====
+
 const reactionBackdrop = document.getElementById("reaction-backdrop");
 const reactionClose = document.getElementById("reaction-close");
 const reactionTitle = document.getElementById("reaction-title");
@@ -834,15 +834,14 @@ function startReactionAnimation(sym1, sym2, infoText) {
       }
     }
 
-        // nobel-gas / no-bond case: only red cross, no line
+
     const noBond = infoText.toLowerCase().includes("no stable compound");
 
     const x1 = leftX + 35;
     const x2 = rightX - 35;
     const xMid = (x1 + x2) / 2;
 
-    // NORMAL BOND (solid line only)
-    // NORMAL BOND (single/double/triple line)
+
 if (t > 0.5 && !noBond) {
   const bondPhase = Math.min(1, (t - 0.5) / 0.4);
   const drawTo = x1 + (x2 - x1) * bondPhase;
@@ -857,17 +856,17 @@ if (t > 0.5 && !noBond) {
   ctx.lineTo(drawTo, cy);
   ctx.stroke();
 
-  // extra lines only for covalent double / triple
+
   if (!isIonic && (isDouble || isTriple)) {
     const offset = 8;
 
-    // upper line
+
     ctx.beginPath();
     ctx.moveTo(x1, cy - offset);
     ctx.lineTo(drawTo, cy - offset);
     ctx.stroke();
 
-    // third line only if triple
+
     if (isTriple) {
       ctx.beginPath();
       ctx.moveTo(x1, cy + offset);
@@ -878,9 +877,9 @@ if (t > 0.5 && !noBond) {
 }
 
 
-    // NO-BOND CASE (e.g. noble gases) → red cross at center
+
     if (t > 0.5 && noBond) {
-      ctx.setLineDash([]);             // <- just in case
+      ctx.setLineDash([]);             
       const size = 14;
       ctx.strokeStyle = "#f97373";
       ctx.lineWidth = 3;
@@ -894,7 +893,7 @@ if (t > 0.5 && !noBond) {
     }
 
 
-    // special: show red cross for no-bond cases (e.g., noble gases)
+
     if (t > 0.5 && noBond) {
       const size = 14; // cross half-length
       ctx.strokeStyle = "#f97373";
@@ -909,9 +908,8 @@ if (t > 0.5 && !noBond) {
     }
 
 
-    // special: show red cross for no-bond cases (e.g., noble gases)
     if (t > 0.5 && noBond) {
-      const size = 14; // cross half-length
+      const size = 14; 
       ctx.strokeStyle = "#f97373";
       ctx.lineWidth = 3;
 
@@ -978,10 +976,7 @@ const bondingCanvas = document.getElementById("bonding-canvas");
 const bondingCtx = bondingCanvas ? bondingCanvas.getContext("2d") : null;
 const bondingInfo = document.getElementById("bonding-info");
 
-// ===== COPY YOUR EXISTING app.js COMPLETELY TILL bondingLessons array =====
-// ... (sab kuch same rahega - voice, reactions, CH4, NH3, H2O etc.)
 
-// ===== HYBRIDISATION LESSONS ADD HERE (bondingLessons array ke END mein) =====
 const bondingLessons = [
   {
     id: "intro",
@@ -1083,13 +1078,13 @@ const bondingLessons = [
   }
 ];
 
-// ===== UPDATE drawLessonFrame FUNCTION (add this case) =====
+
 function drawHybridOrbitals(ctx, cx, cy, type, frame) {
   const t = frame * 0.015;
   const pulse = 1 + 0.1 * Math.sin(t);
 
   if (type === "sp") {
-    // BeCl2: linear
+
     const beX = cx;
     const beY = cy;
     const clLeftX  = cx - 140;
@@ -1099,12 +1094,11 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
     bAtom(ctx, clLeftX,  beY, "Cl", "#22c55e", 26 * pulse);
     bAtom(ctx, clRightX, beY, "Cl", "#22c55e", 26 * pulse);
 
-    // bond lines
     bBondLine(ctx, beX - 22, beY, clLeftX  + 26, beY, 1);
     bBondLine(ctx, beX + 22, beY, clRightX - 26, beY, 1);
 
   } else if (type === "sp2") {
-    // BF3: trigonal planar
+
     const bX = cx;
     const bY = cy - 10;
     bAtom(ctx, bX, bY, "B", "#f97316", 24 * pulse);
@@ -1119,7 +1113,7 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
     }
 
   } else if (type === "sp3") {
-    // CH4: tetrahedral projection
+
     const cX = cx;
     const cY = cy;
     bAtom(ctx, cX, cY, "C", "#f97316", 28 * pulse);
@@ -1136,7 +1130,7 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
     });
 
   } else if (type === "dsp2") {
-    // Ni(CN)4^2-: square planar
+
     const niX = cx;
     const niY = cy;
     const d = 80;
@@ -1154,7 +1148,7 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
     });
 
   } else if (type === "sp3d") {
-    // PCl5: trigonal bipyramidal
+
     const pX = cx;
     const pY = cy;
     bAtom(ctx, pX, pY, "P", "#fbbf24", 26 * pulse);
@@ -1178,7 +1172,7 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
     }
 
   } else if (type === "d2sp3") {
-    // SF6: octahedral
+
     const sX = cx;
     const sY = cy;
     bAtom(ctx, sX, sY, "S", "#fbbf24", 28 * pulse);
@@ -1200,10 +1194,6 @@ function drawHybridOrbitals(ctx, cx, cy, type, frame) {
   }
 }
 
-
-
-// ===== BAQI SAB SAME RAHEGA =====
-// Voice search, reactions, atom modal - NOTHING CHANGES!
 
 
 let bondingAnimId = null;
@@ -1320,7 +1310,7 @@ function drawLessonFrame(lessonId, frame) {
   const t = frame * 0.02;
   const pulse = 1 + 0.05 * Math.sin(t);
 
-  // ===== BASIC LESSONS =====
+
   if (lessonId === "intro") {
     ctx.fillStyle = "#e5e7eb";
     ctx.font = "18px system-ui";
@@ -1338,10 +1328,10 @@ function drawLessonFrame(lessonId, frame) {
   const oX = cx;
   const oY = cy - 10;
 
-  // Center O atom
+
   bAtom(ctx, oX, oY, "O", "#60a5fa", 30 * pulse);
 
-  // Bent geometry ~104.5°
+
   const r = 95;
   const angle = (104.5 * Math.PI) / 180 / 2;
 
@@ -1379,14 +1369,14 @@ function drawLessonFrame(lessonId, frame) {
   const leftX = cx - 80;
   const rightX = cx + 80;
 
-  // time-based shift for polarity animation
-  const shift = 6 * Math.sin(t);   // t = frame * 0.02 upar defined hai
 
-  // H thoda left-right oscillate
+  const shift = 6 * Math.sin(t);  
+
+
   const hX = leftX + shift;
   const hY = cy;
 
-  // Cl almost fixed
+
   const clX = rightX;
   const clY = cy;
 
@@ -1394,15 +1384,15 @@ function drawLessonFrame(lessonId, frame) {
   bAtom(ctx, hX,  hY,  "H",  "#fbbf24", 24 * pulse);
   bAtom(ctx, clX, clY, "Cl", "#22c55e", 30 * pulse);
 
-  // covalent bond line – orange, thoda thick
+
   bBondLine(ctx, hX + 24, hY, clX - 30, clY, 1, "#f97316");
 
-  // Cl par 3 lone pairs
+
   bElectronPair(ctx, clX, clY, Math.PI / 2,        40);
   bElectronPair(ctx, clX, clY, (3 * Math.PI) / 4,  40);
   bElectronPair(ctx, clX, clY, Math.PI / 4,        40);
 
-  // polarity arrow H → Cl (δ+ → δ−)
+
   ctx.strokeStyle = "#fbbf24";
   ctx.lineWidth = 2;
   ctx.setLineDash([6, 5]);
@@ -1413,7 +1403,6 @@ function drawLessonFrame(lessonId, frame) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // delta symbols
   ctx.fillStyle = "#fbbf24";
   ctx.font = "14px system-ui";
   ctx.fillText("δ⁺", hX - 10, hY - 32);
@@ -1470,15 +1459,14 @@ function drawLessonFrame(lessonId, frame) {
   bAtom(ctx, leftX,  cY, "O", "#60a5fa", 28 * pulse);
   bAtom(ctx, cX,     cY, "C", "#f97316", 30 * pulse);
   bAtom(ctx, rightX, cY, "O", "#60a5fa", 28 * pulse);
-
-  // clean double bonds: 2 parallel lines each side
-  const gapO = 32;   // kitna andar se start
+    
+  const gapO = 32;   
   const gapC = 26;
 
-  // LEFT O = C
+
   bBondLine(ctx, leftX  + gapO, cY, cX - gapC, cY, 2);
 
-  // RIGHT C = O
+
   bBondLine(ctx, cX + gapC, cY, rightX - gapO, cY, 2);
 }
 
@@ -1507,7 +1495,7 @@ function drawLessonFrame(lessonId, frame) {
   const nX = cx - 40;
   const nY = cy;
 
-  // NH3 core (N + 3 H)
+
   bAtom(ctx, nX, nY, "N", "#22c55e", 30 * pulse);
   const r = 75;
   const angleStep = (2 * Math.PI) / 3;
@@ -1519,7 +1507,7 @@ function drawLessonFrame(lessonId, frame) {
     bBondLine(ctx, nX, nY, hx, hy, 1);
   }
 
-  // incoming H+ (NH4+ formation animation)
+
   const hStartX = cx + 130;
   const hEndX   = cx + 20;
   const hY      = cy;
@@ -1529,10 +1517,10 @@ function drawLessonFrame(lessonId, frame) {
 
   bAtom(ctx, hX, hY, "H⁺", "#fbbf24", 22 * pulse);
 
-  // lone pair on N donating
+
   bElectronPair(ctx, nX, nY, 0, 40);
 
-  // dotted coordinate bond arrow N → H+
+
   ctx.strokeStyle = "#38bdf8";
   ctx.lineWidth = 3;
   ctx.setLineDash([8, 6]);
@@ -1567,7 +1555,7 @@ function drawLessonFrame(lessonId, frame) {
     }
   }
 
-  // ===== HYBRIDISATION CASES =====
+
   const hybridTypes = ["sp", "sp2", "sp3", "dsp2", "sp3d", "d2sp3"];
   if (hybridTypes.includes(lessonId)) {
     const cx2 = cx;
@@ -1623,7 +1611,7 @@ if (Recognition) {
 
     let transcript = e.results[0][0].transcript.trim().toLowerCase();
 
-    // CLEAN TRANSCRIPT FOR BETTER MATCHING
+
     transcript = transcript.replace(/[^\w\s]/g, "").trim();                 // . , ? ! hatao
     transcript = transcript.replace(/\s*(element|say|the)\s*/g, "").trim(); // extra words
     const words = transcript.split(/\s+/).filter((w) => w.length > 1);
@@ -1631,7 +1619,7 @@ if (Recognition) {
 
     console.log("VOICE TRANSCRIPT =", transcript);
 
-    // Reaction queries
+
     if (
       transcript.includes("reaction") ||
       transcript.includes("plus") ||
@@ -1641,26 +1629,25 @@ if (Recognition) {
       return;
     }
 
-    // SMART ELEMENT MATCHING
     let found = elements.find((el) => {
       const name = el.name.toLowerCase();
       const sym  = el.sym.toLowerCase();
 
-      // exact name / symbol
+  
       if (name === transcript || sym === transcript) return true;
 
-      // transcript inside name  (carb in carbon, oxy in oxygen)
+    
       if (name.includes(transcript)) return true;
 
-      // name inside transcript (carbon element, open carbon)
+    
       if (transcript.includes(name)) return true;
 
       return false;
     });
 
-    // EXTRA FALLBACKS FOR COMMON CASES
+  
     if (!found) {
-      // first word only (e.g. "carbon element" -> "carbon")
+ 
       const firstWord = transcript.split(/\s+/)[0];
       found = elements.find(
         (el) =>
@@ -1673,7 +1660,7 @@ if (Recognition) {
   !found &&
   (transcript.startsWith("carb") || transcript.startsWith("karb"))
 ) {
-  // special: any sound-like karbon / carbon -> Carbon
+
   found = elements.find((el) => el.name === "Carbon");
 }
 
@@ -1693,13 +1680,13 @@ if (voiceBtn && recognition) {
       recognition.start();
       speak("Say the element name or symbol, for example carbon or H.");
     } catch {
-      // ignore double start
+  
     }
   });
 }
 
 
-// ===== AI CHATBOT INTEGRATION =====
+
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatWindow = document.getElementById("chat-window");
@@ -1758,9 +1745,7 @@ if (chatForm && chatInput && chatWindow) {
   });
 }
 
-// ===== QUIZ + SCORE SYSTEM 🎮 =====
 
-// DOM references
 const quizBtn = document.getElementById("quiz-btn");
 const quizModal = document.getElementById("quiz-modal");
 const quizClose = document.getElementById("quiz-close");
@@ -1777,7 +1762,7 @@ const quizScoreEl = document.getElementById("quiz-score");
 const quizRestartBtn = document.getElementById("quiz-restart");
 
 let quizState = {
-  mode: "mixed",   // symbol | atomic | mixed
+  mode: "mixed",  
   score: 0,
   total: 10,
   time: 30,
@@ -1786,7 +1771,7 @@ let quizState = {
   currentIdx: 0,
 };
 
-// --- helpers ---
+
 function shuffleArray(arr) {
   return arr
     .map((x) => ({ x, r: Math.random() }))
@@ -1798,7 +1783,7 @@ function getRandomElements(count) {
   return shuffleArray(elements).slice(0, count);
 }
 
-// --- localStorage score ---
+
 function loadBestScore() {
   if (!scoreDisplay) return;
   const best = Number(localStorage.getItem("periodicQuizBest") || 0);
@@ -1815,7 +1800,7 @@ function saveBestScore(percent) {
   }
 }
 
-// --- question generation ---
+
 function generateQuestions() {
   const qs = [];
   if (quizState.mode === "symbol") {
@@ -1843,7 +1828,7 @@ function generateQuestions() {
       });
     });
   } else {
-    // mixed: 5 symbol + 5 atomic
+ 
     const symEls = getRandomElements(5);
     const atEls = getRandomElements(5);
     symEls.forEach((el) => {
@@ -1873,7 +1858,7 @@ function generateQuestions() {
   return qs;
 }
 
-// --- timer animation ---
+
 function startTimer() {
   if (!timerEl) return;
   clearInterval(quizState.timerId);
@@ -1884,13 +1869,13 @@ function startTimer() {
     timerEl.textContent = quizState.time;
     if (quizState.time <= 0) {
       clearInterval(quizState.timerId);
-      // time out → wrong
+      
       handleAnswer(false);
     }
   }, 1000);
 }
 
-// --- render question ---
+
 function showQuestion() {
   if (!questionDisplay) return;
 
@@ -1900,13 +1885,13 @@ function showQuestion() {
 
   const q = quizState.questions[quizState.currentIdx];
 
-  // pulse animation
+
   questionDisplay.classList.remove("q-pulse");
   void questionDisplay.offsetWidth;
   questionDisplay.classList.add("q-pulse");
 
   if (q.type === "symbol") {
-    // SYMBOL → NAME (MCQ)
+   
     questionDisplay.innerHTML = `<span class="symbol">${q.sym}</span>`;
 
     quizOptionsEl.classList.remove("hidden");
@@ -1933,7 +1918,7 @@ function showQuestion() {
       });
     });
   } else {
-    // NAME → ATOMIC NUMBER (sirf likhne ka)
+    
     questionDisplay.innerHTML = `Atomic number of <strong>${q.name}</strong>?`;
 
     // 👇 yahan options full hide
@@ -1945,23 +1930,23 @@ function showQuestion() {
     quizInputEl.focus();
   }
 
-  startTimer(); // agar tere code me hai to ye line rehne de
+  startTimer(); 
 }
 
 
-// --- answer handling ---
+
 function handleAnswer(isCorrect) {
   clearInterval(quizState.timerId);
   if (isCorrect) quizState.score += 1;
   quizState.currentIdx += 1;
 
-  // short delay for animation
+
   setTimeout(() => {
     showQuestion();
   }, 700);
 }
 
-// submit for input-based question
+
 if (quizSubmitBtn && quizInputEl) {
   quizSubmitBtn.addEventListener("click", () => {
     const q = quizState.questions[quizState.currentIdx];
@@ -1978,7 +1963,7 @@ if (quizSubmitBtn && quizInputEl) {
   });
 }
 
-// --- results ---
+
 function showResults() {
   if (!quizGameEl || !quizResultsEl || !quizScoreEl) return;
   quizGameEl.classList.add("hidden");
@@ -1988,7 +1973,7 @@ function showResults() {
   saveBestScore(percent);
 }
 
-// --- mode buttons + main button ---
+
 function initQuiz() {
   if (!quizModal || !quizModesEl || !quizGameEl) return;
 
@@ -2004,7 +1989,7 @@ function initQuiz() {
     });
   });
 
-  // open button
+
   if (quizBtn) {
     quizBtn.addEventListener("click", () => {
       quizModal.classList.remove("hidden");
@@ -2015,7 +2000,7 @@ function initQuiz() {
     });
   }
 
-  // close handlers
+ 
   if (quizClose) {
     quizClose.addEventListener("click", () => {
       quizModal.classList.add("hidden");
@@ -2052,3 +2037,4 @@ function startQuiz() {
 
 // init after DOM
 document.addEventListener("DOMContentLoaded", initQuiz);
+
